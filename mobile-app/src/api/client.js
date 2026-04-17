@@ -1,4 +1,5 @@
 import * as FileSystem from "expo-file-system";
+import { Buffer } from "buffer";
 
 const API_BASE_URL = "https://vernancular-fd-advisor.onrender.com";
 
@@ -70,17 +71,8 @@ export async function requestTtsToLocalFile(text, targetLanguageCode = "hi-IN") 
     throw new Error(err || "TTS failed");
   }
 
-  const blob = await response.blob();
-  const b64 = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = String(reader.result || "");
-      const parts = result.split(",");
-      resolve(parts[1] || "");
-    };
-    reader.onerror = () => reject(new Error("Failed to read TTS audio"));
-    reader.readAsDataURL(blob);
-  });
+  const bytes = await response.arrayBuffer();
+  const b64 = Buffer.from(bytes).toString("base64");
   const localPath = `${FileSystem.cacheDirectory}reply-${Date.now()}.mp3`;
   await FileSystem.writeAsStringAsync(localPath, b64, {
     encoding: FileSystem.EncodingType.Base64

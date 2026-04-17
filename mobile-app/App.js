@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Audio } from "expo-av";
 import * as Localization from "expo-localization";
@@ -29,6 +29,7 @@ export default function App() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [locationPermission, setLocationPermission] = useState(false);
   const [locationState, setLocationState] = useState({ lat: null, lng: null, nearbyBanks: [] });
   const [recommendations, setRecommendations] = useState([]);
   const [selectedFd, setSelectedFd] = useState(null);
@@ -101,7 +102,12 @@ export default function App() {
   const resolveLocationIfPossible = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") return;
+      const granted = status === "granted";
+      setLocationPermission(granted);
+      if (!granted) {
+        setLocationState({ lat: null, lng: null, nearbyBanks: [] });
+        return;
+      }
 
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       const lat = loc.coords.latitude;
@@ -113,9 +119,14 @@ export default function App() {
 
       setLocationState({ lat, lng, nearbyBanks });
     } catch {
+      setLocationPermission(false);
       // Location is optional by product UX.
     }
   };
+
+  useEffect(() => {
+    resolveLocationIfPossible();
+  }, []);
 
   const sendAdvisorInput = async (userInput) => {
     if (!userInput.trim()) return;
@@ -128,6 +139,7 @@ export default function App() {
         session_id: sessionId.current,
         userInput,
         user_language: lang,
+        location_permission: locationPermission,
         nearbyBanks: locationState.nearbyBanks,
         lat: locationState.lat,
         lng: locationState.lng
@@ -193,7 +205,6 @@ export default function App() {
       if (conversationMode === "voice") {
         await playText(greeting);
       }
-      resolveLocationIfPossible();
     }
   };
 
