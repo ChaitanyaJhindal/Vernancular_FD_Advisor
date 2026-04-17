@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "Vernacular FD Advisor",
+    "slug": "vernacular-fd-advisor",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.vernacularfdadvisor.app"
+    },
+    "plugins": [
+      "expo-location",
+      "expo-localization"
+    ]
+  }
+}
