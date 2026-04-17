@@ -1,11 +1,12 @@
 import React, { useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { Audio } from "expo-av";
 import * as Localization from "expo-localization";
 import * as Location from "expo-location";
+import * as Speech from "expo-speech";
 import MicButton from "./src/components/MicButton";
 import ResultCard from "./src/components/ResultCard";
-import { askFdAdvisor, fetchNearbyBanks, requestTtsToLocalFile, transcribeFromUri } from "./src/api/client";
+import AgentAvatar from "./src/components/AgentAvatar";
+import { askFdAdvisor, fetchNearbyBanks, transcribeFromUri } from "./src/api/client";
 import { useVoiceRecorder } from "./src/hooks/useVoiceRecorder";
 import { colors, radii, spacing } from "./src/theme";
 
@@ -27,34 +28,54 @@ export default function App() {
   const [inputText, setInputText] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [locationState, setLocationState] = useState({ lat: null, lng: null, nearbyBanks: [] });
   const [recommendations, setRecommendations] = useState([]);
   const [selectedFd, setSelectedFd] = useState(null);
 
   const sessionId = useRef(`mobile-${Date.now()}`);
-  const soundRef = useRef(null);
   const lang = useMemo(() => detectLangCode(), []);
 
   const { isRecording, startRecording, stopRecording } = useVoiceRecorder();
 
   const stopPlayback = async () => {
-    if (soundRef.current) {
-      await soundRef.current.stopAsync();
-      await soundRef.current.unloadAsync();
-      soundRef.current = null;
-    }
+    Speech.stop();
+    setIsSpeaking(false);
+  };
+
+  const resolveSpeechLocale = () => {
+    if (lang === "en") return "en-IN";
+    if (lang === "ta") return "ta-IN";
+    if (lang === "gu") return "gu-IN";
+    return "hi-IN";
   };
 
   const playText = async (text) => {
     if (!text) return;
     try {
       await stopPlayback();
-      const localUri = await requestTtsToLocalFile(text, lang === "en" ? "en-IN" : "hi-IN");
-      const { sound } = await Audio.Sound.createAsync({ uri: localUri });
-      soundRef.current = sound;
-      await sound.playAsync();
+      await new Promise((resolve) => {
+        Speech.speak(text, {
+          language: resolveSpeechLocale(),
+          pitch: 1.0,
+          rate: 0.95,
+          onStart: () => setIsSpeaking(true),
+          onDone: () => {
+            setIsSpeaking(false);
+            resolve();
+          },
+          onStopped: () => {
+            setIsSpeaking(false);
+            resolve();
+          },
+          onError: () => {
+            setIsSpeaking(false);
+            resolve();
+          }
+        });
+      });
     } catch {
-      // Silent fallback keeps UX simple for low-literacy users.
+      setIsSpeaking(false);
     }
   };
 
@@ -115,6 +136,7 @@ export default function App() {
   const onMicPress = async () => {
     try {
       if (!isRecording) {
+        await stopPlayback();
         await startRecording();
         return;
       }
@@ -161,6 +183,10 @@ export default function App() {
       <SafeAreaView style={styles.container}>
         <View style={styles.homeWrap}>
           <Text style={styles.brand}>Vernacular FD Advisor</Text>
+          <AgentAvatar
+            speaking={conversationMode === "voice" && isSpeaking}
+            label={conversationMode === "voice" && isSpeaking ? "Advisor bol rahi hain..." : "Aapki FD didi"}
+          />
           <View style={styles.langChip}>
             <Text style={styles.langText}>Language: {lang.toUpperCase()}</Text>
           </View>
@@ -176,7 +202,10 @@ export default function App() {
             </Pressable>
             <Pressable
               style={[styles.modePillHome, conversationMode === "text" && styles.modePillHomeActive]}
-              onPress={() => setConversationMode("text")}
+              onPress={async () => {
+                await stopPlayback();
+                setConversationMode("text");
+              }}
             >
               <Text style={[styles.modePillHomeText, conversationMode === "text" && styles.modePillHomeTextActive]}>
                 Text Mode
@@ -273,6 +302,19 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <View style={styles.chatWrap}>
         <Text style={styles.title}>Conversation</Text>
+        <View style={styles.agentRow}>
+          <AgentAvatar
+            speaking={conversationMode === "voice" && isSpeaking}
+            label={conversationMode === "voice" && isSpeaking ? "Main sun rahi hoon aur bol bhi rahi hoon" : "Main yahin hoon, poochiye"}
+          />
+          <Pressable
+            style={styles.stopSpeakBtn}
+            onPress={stopPlayback}
+          >
+            <Text style={styles.stopSpeakText}>Stop Voice</Text>
+          </Pressable>
+        </View>
+
         <View style={styles.modeRowConversation}>
           <Pressable
             style={[styles.modePillConversation, conversationMode === "voice" && styles.modePillConversationActive]}
@@ -289,7 +331,10 @@ export default function App() {
           </Pressable>
           <Pressable
             style={[styles.modePillConversation, conversationMode === "text" && styles.modePillConversationActive]}
-            onPress={() => setConversationMode("text")}
+            onPress={async () => {
+              await stopPlayback();
+              setConversationMode("text");
+            }}
           >
             <Text
               style={[
@@ -414,6 +459,25 @@ const styles = StyleSheet.create({
     color: colors.subText,
     textAlign: "center",
     paddingHorizontal: 12
+  },
+  agentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10
+  },
+  stopSpeakBtn: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.full,
+    paddingHorizontal: 12,
+    paddingVertical: 8
+  },
+  stopSpeakText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: colors.primary
   },
   secondaryBtn: {
     backgroundColor: colors.surface,
