@@ -1,12 +1,12 @@
 import React, { useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Audio } from "expo-av";
 import * as Localization from "expo-localization";
 import * as Location from "expo-location";
-import * as Speech from "expo-speech";
 import MicButton from "./src/components/MicButton";
 import ResultCard from "./src/components/ResultCard";
 import AgentAvatar from "./src/components/AgentAvatar";
-import { askFdAdvisor, fetchNearbyBanks, transcribeFromUri } from "./src/api/client";
+import { askFdAdvisor, fetchNearbyBanks, requestTtsToLocalFile, transcribeFromUri } from "./src/api/client";
 import { useVoiceRecorder } from "./src/hooks/useVoiceRecorder";
 import { colors, radii, spacing } from "./src/theme";
 
@@ -34,12 +34,25 @@ export default function App() {
   const [selectedFd, setSelectedFd] = useState(null);
 
   const sessionId = useRef(`mobile-${Date.now()}`);
+  const soundRef = useRef(null);
   const lang = useMemo(() => detectLangCode(), []);
 
   const { isRecording, startRecording, stopRecording } = useVoiceRecorder();
 
   const stopPlayback = async () => {
-    Speech.stop();
+    if (soundRef.current) {
+      try {
+        await soundRef.current.stopAsync();
+      } catch {
+        // no-op
+      }
+      try {
+        await soundRef.current.unloadAsync();
+      } catch {
+        // no-op
+      }
+      soundRef.current = null;
+    }
     setIsSpeaking(false);
   };
 
@@ -54,26 +67,32 @@ export default function App() {
     if (!text) return;
     try {
       await stopPlayback();
+      const localUri = await requestTtsToLocalFile(text, resolveSpeechLocale());
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true
+      });
+
+      const { sound } = await Audio.Sound.createAsync({ uri: localUri });
+      soundRef.current = sound;
+      setIsSpeaking(true);
+
       await new Promise((resolve) => {
-        Speech.speak(text, {
-          language: resolveSpeechLocale(),
-          pitch: 1.0,
-          rate: 0.95,
-          onStart: () => setIsSpeaking(true),
-          onDone: () => {
-            setIsSpeaking(false);
-            resolve();
-          },
-          onStopped: () => {
-            setIsSpeaking(false);
-            resolve();
-          },
-          onError: () => {
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (!status.isLoaded) return;
+          if (status.didJustFinish) {
             setIsSpeaking(false);
             resolve();
           }
         });
+        sound.playAsync().catch(() => {
+          setIsSpeaking(false);
+          resolve();
+        });
       });
+
+      await sound.unloadAsync();
+      soundRef.current = null;
     } catch {
       setIsSpeaking(false);
     }
