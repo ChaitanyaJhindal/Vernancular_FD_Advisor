@@ -348,6 +348,7 @@ function buildFdReason(lang, item) {
 export function getFdRecommendationsCore({ amount, tenureMonths, userLanguage, nearbyBanks, userText = "" }) {
   const { banks, fdProducts } = loadFdData();
   const banksById = new Map(banks.map((b) => [b.bank_id, b]));
+  const hasNearbyData = Array.isArray(nearbyBanks) && nearbyBanks.length > 0;
 
   const nearbyLookup = new Map(
     (nearbyBanks || []).map((b) => [
@@ -387,11 +388,18 @@ export function getFdRecommendationsCore({ amount, tenureMonths, userLanguage, n
 
   const scored = filtered.map((item) => {
     const returns_score = maxReturn > 0 ? (item.bank_return / maxReturn) * 100 : 0;
-    const score =
-      (returns_score * 0.5) +
-      (item.trust_score * 0.25) +
-      (item.ease_score * 0.15) +
-      (item.distance_score * 0.1);
+    const score = hasNearbyData
+      ? (
+        (returns_score * 0.5) +
+        (item.trust_score * 0.25) +
+        (item.ease_score * 0.15) +
+        (item.distance_score * 0.1)
+      )
+      : (
+        (returns_score * 0.6) +
+        (item.trust_score * 0.25) +
+        (item.ease_score * 0.15)
+      );
 
     return {
       ...item,
