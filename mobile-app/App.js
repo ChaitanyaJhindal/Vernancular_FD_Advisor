@@ -1,12 +1,27 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
+} from "react-native";
 import { Audio } from "expo-av";
 import * as Localization from "expo-localization";
 import * as Location from "expo-location";
 import MicButton from "./src/components/MicButton";
 import ResultCard from "./src/components/ResultCard";
 import AgentAvatar from "./src/components/AgentAvatar";
-import { askFdAdvisor, fetchNearbyBanks, requestTtsToLocalFile, transcribeFromUri } from "./src/api/client";
+import {
+  askFdAdvisor,
+  fetchNearbyBanks,
+  requestTtsToLocalFile,
+  transcribeFromUri
+} from "./src/api/client";
 import { useVoiceRecorder } from "./src/hooks/useVoiceRecorder";
 import { colors, radii, spacing } from "./src/theme";
 
@@ -25,10 +40,12 @@ function stageToQuestion(stage) {
 export default function App() {
   const [screen, setScreen] = useState("home");
   const [conversationMode, setConversationMode] = useState("voice");
+  const [liveMode, setLiveMode] = useState(false);
   const [inputText, setInputText] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isTtsLoading, setIsTtsLoading] = useState(false);
   const [locationPermission, setLocationPermission] = useState(false);
   const [locationState, setLocationState] = useState({ lat: null, lng: null, nearbyBanks: [] });
   const [recommendations, setRecommendations] = useState([]);
@@ -55,6 +72,7 @@ export default function App() {
       soundRef.current = null;
     }
     setIsSpeaking(false);
+    setIsTtsLoading(false);
   };
 
   const resolveSpeechLocale = () => {
@@ -64,14 +82,26 @@ export default function App() {
     return "hi-IN";
   };
 
-  const playText = async (text) => {
+  const playText = async (text, options = {}) => {
     if (!text) return;
+
+    const autoListenAfter = Boolean(options.autoListenAfter);
+
     try {
+      if (isRecording) {
+        await stopRecording();
+      }
+
       await stopPlayback();
+      setIsTtsLoading(true);
+
       const localUri = await requestTtsToLocalFile(text, resolveSpeechLocale());
+
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
-        playsInSilentModeIOS: true
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false
       });
 
       const { sound } = await Audio.Sound.createAsync({ uri: localUri });
@@ -86,6 +116,7 @@ export default function App() {
             resolve();
           }
         });
+
         sound.playAsync().catch(() => {
           setIsSpeaking(false);
           resolve();
@@ -94,8 +125,14 @@ export default function App() {
 
       await sound.unloadAsync();
       soundRef.current = null;
+      setIsTtsLoading(false);
+
+      if (autoListenAfter && conversationMode === "voice" && liveMode && !isRecording) {
+        await startRecording();
+      }
     } catch {
       setIsSpeaking(false);
+      setIsTtsLoading(false);
     }
   };
 
@@ -104,6 +141,7 @@ export default function App() {
       const { status } = await Location.requestForegroundPermissionsAsync();
       const granted = status === "granted";
       setLocationPermission(granted);
+
       if (!granted) {
         setLocationState({ lat: null, lng: null, nearbyBanks: [] });
         return;
@@ -120,12 +158,17 @@ export default function App() {
       setLocationState({ lat, lng, nearbyBanks });
     } catch {
       setLocationPermission(false);
-      // Location is optional by product UX.
     }
   };
 
   useEffect(() => {
     resolveLocationIfPossible();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopPlayback();
+    };
   }, []);
 
   const sendAdvisorInput = async (userInput) => {
@@ -149,7 +192,7 @@ export default function App() {
       setMessages((prev) => [...prev, { role: "bot", text: botText }]);
 
       if (conversationMode === "voice") {
-        await playText(botText);
+        await playText(botText, { autoListenAfter: true });
       }
 
       if (Array.isArray(response?.recommendations) && response.recommendations.length > 0) {
@@ -179,9 +222,9 @@ export default function App() {
       const transcript = await transcribeFromUri(uri);
       const text = String(
         transcript?.transcript ||
-        transcript?.text ||
-        transcript?.output_text ||
-        ""
+          transcript?.text ||
+          transcript?.output_text ||
+          ""
       ).trim();
 
       if (!text) {
@@ -199,11 +242,17 @@ export default function App() {
 
   const goConversation = async () => {
     setScreen("conversation");
+
     if (messages.length === 0) {
       const greeting = "Namaste, FD ke liye taiyaar hain?";
       setMessages([{ role: "bot", text: greeting }]);
+
       if (conversationMode === "voice") {
         await playText(greeting);
+      }
+
+      if (conversationMode === "voice" && liveMode && !isRecording) {
+        await startRecording();
       }
     }
   };
@@ -217,6 +266,7 @@ export default function App() {
             speaking={conversationMode === "voice" && isSpeaking}
             label={conversationMode === "voice" && isSpeaking ? "Advisor bol rahi hain..." : "Aapki FD didi"}
           />
+
           <View style={styles.langChip}>
             <Text style={styles.langText}>Language: {lang.toUpperCase()}</Text>
           </View>
@@ -234,6 +284,7 @@ export default function App() {
               style={[styles.modePillHome, conversationMode === "text" && styles.modePillHomeActive]}
               onPress={async () => {
                 await stopPlayback();
+                setLiveMode(false);
                 setConversationMode("text");
               }}
             >
@@ -244,6 +295,23 @@ export default function App() {
           </View>
 
           <Text style={styles.modeHint}>Dono mode me aap mic aur text dono use kar sakte hain.</Text>
+
+          {conversationMode === "voice" ? (
+            <Pressable
+              style={[styles.livePill, liveMode && styles.livePillActive]}
+              onPress={async () => {
+                const next = !liveMode;
+                setLiveMode(next);
+                if (!next && isRecording) {
+                  await stopRecording();
+                }
+              }}
+            >
+              <Text style={[styles.livePillText, liveMode && styles.livePillTextActive]}>
+                {liveMode ? "Live Call ON" : "Enable Live Call"}
+              </Text>
+            </Pressable>
+          ) : null}
 
           <MicButton
             recording={isRecording}
@@ -318,6 +386,7 @@ export default function App() {
               setRecommendations([]);
               setSelectedFd(null);
               setMessages([]);
+              setLiveMode(false);
               setScreen("home");
             }}
           >
@@ -332,18 +401,36 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <View style={styles.chatWrap}>
         <Text style={styles.title}>Conversation</Text>
+
         <View style={styles.agentRow}>
           <AgentAvatar
             speaking={conversationMode === "voice" && isSpeaking}
-            label={conversationMode === "voice" && isSpeaking ? "Main sun rahi hoon aur bol bhi rahi hoon" : "Main yahin hoon, poochiye"}
+            label={conversationMode === "voice" && isSpeaking ? "Main bol rahi hoon..." : isRecording ? "Main sun rahi hoon..." : "Main yahin hoon, poochiye"}
           />
-          <Pressable
-            style={styles.stopSpeakBtn}
-            onPress={stopPlayback}
-          >
+          <Pressable style={styles.stopSpeakBtn} onPress={stopPlayback}>
             <Text style={styles.stopSpeakText}>Stop Voice</Text>
           </Pressable>
         </View>
+
+        {conversationMode === "voice" ? (
+          <View style={styles.liveRow}>
+            <Pressable
+              style={[styles.livePill, liveMode && styles.livePillActive]}
+              onPress={async () => {
+                const next = !liveMode;
+                setLiveMode(next);
+                if (!next && isRecording) {
+                  await stopRecording();
+                }
+              }}
+            >
+              <Text style={[styles.livePillText, liveMode && styles.livePillTextActive]}>
+                {liveMode ? "Live Call ON" : "Start Live Call"}
+              </Text>
+            </Pressable>
+            <Text style={styles.liveHelpText}>{liveMode ? "Reply ke baad mic auto start hoga" : "Manual mic: tap to talk"}</Text>
+          </View>
+        ) : null}
 
         <View style={styles.modeRowConversation}>
           <Pressable
@@ -363,6 +450,7 @@ export default function App() {
             style={[styles.modePillConversation, conversationMode === "text" && styles.modePillConversationActive]}
             onPress={async () => {
               await stopPlayback();
+              setLiveMode(false);
               setConversationMode("text");
             }}
           >
@@ -386,7 +474,7 @@ export default function App() {
               <Text style={[styles.bubbleText, item.role === "user" && styles.userBubbleText]}>{item.text}</Text>
               {item.role === "bot" ? (
                 <Pressable style={styles.playBtn} onPress={() => playText(item.text)}>
-                  <Text style={styles.playText}>▶ Suno</Text>
+                  <Text style={styles.playText}>{isTtsLoading ? "..." : "▶ Suno"}</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -415,7 +503,11 @@ export default function App() {
         <View style={styles.bottomActionRow}>
           <MicButton recording={isRecording} onPress={onMicPress} />
           <Text style={styles.bottomHint}>
-            {conversationMode === "voice" ? "Voice mode ON: main jawab bolkar bhi bataunga." : "Text mode ON: chaho to mic bhi use kar sakte ho."}
+            {conversationMode === "voice"
+              ? liveMode
+                ? "Live ON: boliye, main jawab dekar phir sunungi."
+                : "Voice mode ON: main jawab bolkar bataungi."
+              : "Text mode ON: chaho to mic bhi use kar sakte ho."}
           </Text>
         </View>
       </View>
@@ -489,6 +581,36 @@ const styles = StyleSheet.create({
     color: colors.subText,
     textAlign: "center",
     paddingHorizontal: 12
+  },
+  liveRow: {
+    marginBottom: 10,
+    alignItems: "flex-start",
+    gap: 6
+  },
+  livePill: {
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+    paddingVertical: 8
+  },
+  livePillActive: {
+    backgroundColor: colors.success,
+    borderColor: colors.success
+  },
+  livePillText: {
+    fontSize: 13,
+    color: colors.primary,
+    fontWeight: "800"
+  },
+  livePillTextActive: {
+    color: "#FFFFFF"
+  },
+  liveHelpText: {
+    fontSize: 13,
+    color: colors.subText,
+    fontWeight: "700"
   },
   agentRow: {
     flexDirection: "row",
