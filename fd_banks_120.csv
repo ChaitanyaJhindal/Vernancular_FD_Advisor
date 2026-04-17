@@ -1,0 +1,121 @@
+bank_id,bank_name,bank_type,is_government,is_rbi_regulated,deposit_insurance_limit,online_fd_available,requires_branch_visit,risk_level,supports_voice,supports_native_language,preferred_tag
+1,State Bank of India,public,True,True,500000,True,False,low,True,True,trusted
+2,Bank of Baroda,public,True,True,500000,True,False,low,True,True,trusted
+3,Punjab National Bank,public,True,True,500000,True,False,low,True,True,trusted
+4,Canara Bank,public,True,True,500000,True,False,low,True,True,trusted
+5,Union Bank of India,public,True,True,500000,True,False,low,True,True,trusted
+6,Indian Bank,public,True,True,500000,True,False,low,True,True,trusted
+7,Bank of India,public,True,True,500000,True,False,low,True,True,trusted
+8,Central Bank of India,public,True,True,500000,True,False,low,True,True,trusted
+9,Indian Overseas Bank,public,True,True,500000,True,False,low,True,True,trusted
+10,UCO Bank,public,True,True,500000,True,False,low,True,True,trusted
+11,Bank of Maharashtra,public,True,True,500000,True,False,low,True,True,trusted
+12,Punjab & Sind Bank,public,True,True,500000,True,False,low,True,True,trusted
+13,HDFC Bank,private,False,True,500000,True,False,medium,True,True,trusted
+14,ICICI Bank,private,False,True,500000,True,False,medium,True,True,trusted
+15,Axis Bank,private,False,True,500000,True,False,medium,True,True,trusted
+16,Kotak Mahindra Bank,private,False,True,500000,True,False,medium,True,True,trusted
+17,IndusInd Bank,private,False,True,500000,True,False,medium,True,True,trusted
+18,Yes Bank,private,False,True,500000,True,False,medium,True,True,trusted
+19,IDFC FIRST Bank,private,False,True,500000,True,False,medium,True,True,trusted
+20,Bandhan Bank,private,False,True,500000,True,False,medium,True,True,trusted
+21,Federal Bank,private,False,True,500000,True,False,medium,True,True,trusted
+22,South Indian Bank,private,False,True,500000,True,False,medium,True,True,trusted
+23,RBL Bank,private,False,True,500000,True,False,medium,True,True,trusted
+24,DCB Bank,private,False,True,500000,True,False,medium,True,True,trusted
+25,Karur Vysya Bank,private,False,True,500000,True,False,medium,True,True,trusted
+26,City Union Bank,private,False,True,500000,True,False,medium,True,True,trusted
+27,Tamilnad Mercantile Bank,private,False,True,500000,True,False,medium,True,True,trusted
+28,CSB Bank,private,False,True,500000,True,False,medium,True,True,trusted
+29,Karnataka Bank,private,False,True,500000,True,False,medium,True,True,trusted
+30,Jammu & Kashmir Bank,private,False,True,500000,True,False,medium,True,True,trusted
+31,Nainital Bank,private,False,True,500000,True,False,medium,True,True,trusted
+32,AU Small Finance Bank,sfb,False,True,500000,True,False,medium,True,True,high_return
+33,Ujjivan Small Finance Bank,sfb,False,True,500000,True,False,medium,True,True,high_return
+34,Suryoday Small Finance Bank,sfb,False,True,500000,True,False,medium,True,True,high_return
+35,Jana Small Finance Bank,sfb,False,True,500000,True,False,medium,True,True,high_return
+36,Equitas Small Finance Bank,sfb,False,True,500000,True,False,medium,True,True,high_return
+37,ESAF Small Finance Bank,sfb,False,True,500000,True,False,medium,True,True,high_return
+38,Utkarsh Small Finance Bank,sfb,False,True,500000,True,False,medium,True,True,high_return
+39,North East Small Finance Bank,sfb,False,True,500000,True,False,medium,True,True,high_return
+40,Capital Small Finance Bank,sfb,False,True,500000,True,False,medium,True,True,high_return
+41,Shivalik Small Finance Bank,sfb,False,True,500000,True,False,medium,True,True,high_return
+42,Fincare Small Finance Bank,sfb,False,True,500000,True,False,medium,True,True,high_return
+43,Airtel Payments Bank,payments,False,True,500000,False,False,high,True,True,special
+44,India Post Payments Bank,payments,False,True,500000,False,False,high,True,True,special
+45,FINO Payments Bank,payments,False,True,500000,False,False,high,True,True,special
+46,Jio Payments Bank,payments,False,True,500000,False,False,high,True,True,special
+47,HSBC India,foreign,False,True,500000,False,False,medium,True,True,special
+48,Standard Chartered Bank,foreign,False,True,500000,False,False,medium,True,True,special
+49,DBS Bank India,foreign,False,True,500000,False,False,medium,True,True,special
+50,Deutsche Bank India,foreign,False,True,500000,False,False,medium,True,True,special
+51,Bank of America India,foreign,False,True,500000,False,False,medium,True,True,special
+52,Barclays Bank India,foreign,False,True,500000,False,False,medium,True,True,special
+53,BNP Paribas India,foreign,False,True,500000,False,False,medium,True,True,special
+54,Citibank India,foreign,False,True,500000,False,False,medium,True,True,special
+55,Gramin Uttar Pradesh Co-operative Bank 1,cooperative,False,False,500000,False,True,high,True,True,high_return
+56,Gramin Uttar Pradesh Urban Co-operative Bank 2,cooperative,False,False,500000,False,True,high,True,True,high_return
+57,Gramin Uttar Pradesh Gramin Bank 3,cooperative,False,False,500000,False,True,high,True,True,high_return
+58,Gramin Uttar Pradesh Nagrik Sahakari Bank 4,cooperative,False,False,500000,False,True,high,True,True,high_return
+59,Gramin Uttar Pradesh Mahila Sahakari Bank 5,cooperative,False,False,500000,False,True,high,True,True,high_return
+60,Gramin Uttar Pradesh District Co-op Bank 6,cooperative,False,False,500000,False,True,high,True,True,high_return
+61,Nagar Uttar Pradesh Co-operative Bank 7,cooperative,False,False,500000,False,True,high,True,True,high_return
+62,Nagar Uttar Pradesh Urban Co-operative Bank 8,cooperative,False,False,500000,False,True,high,True,True,high_return
+63,Nagar Uttar Pradesh Gramin Bank 9,cooperative,False,False,500000,False,True,high,True,True,high_return
+64,Nagar Uttar Pradesh Nagrik Sahakari Bank 10,cooperative,False,False,500000,False,True,high,True,True,high_return
+65,Nagar Uttar Pradesh Mahila Sahakari Bank 11,cooperative,False,False,500000,False,True,high,True,True,high_return
+66,Nagar Uttar Pradesh District Co-op Bank 12,cooperative,False,False,500000,False,True,high,True,True,high_return
+67,Urban Uttar Pradesh Co-operative Bank 13,cooperative,False,False,500000,False,True,high,True,True,high_return
+68,Urban Uttar Pradesh Urban Co-operative Bank 14,cooperative,False,False,500000,False,True,high,True,True,high_return
+69,Urban Uttar Pradesh Gramin Bank 15,cooperative,False,False,500000,False,True,high,True,True,high_return
+70,Urban Uttar Pradesh Nagrik Sahakari Bank 16,cooperative,False,False,500000,False,True,high,True,True,high_return
+71,Urban Uttar Pradesh Mahila Sahakari Bank 17,cooperative,False,False,500000,False,True,high,True,True,high_return
+72,Urban Uttar Pradesh District Co-op Bank 18,cooperative,False,False,500000,False,True,high,True,True,high_return
+73,Janata Uttar Pradesh Co-operative Bank 19,cooperative,False,False,500000,False,True,high,True,True,high_return
+74,Janata Uttar Pradesh Urban Co-operative Bank 20,cooperative,False,False,500000,False,True,high,True,True,high_return
+75,Janata Uttar Pradesh Gramin Bank 21,cooperative,False,False,500000,False,True,high,True,True,high_return
+76,Janata Uttar Pradesh Nagrik Sahakari Bank 22,cooperative,False,False,500000,False,True,high,True,True,high_return
+77,Janata Uttar Pradesh Mahila Sahakari Bank 23,cooperative,False,False,500000,False,True,high,True,True,high_return
+78,Janata Uttar Pradesh District Co-op Bank 24,cooperative,False,False,500000,False,True,high,True,True,high_return
+79,Sahakari Uttar Pradesh Co-operative Bank 25,cooperative,False,False,500000,False,True,high,True,True,high_return
+80,Sahakari Uttar Pradesh Urban Co-operative Bank 26,cooperative,False,False,500000,False,True,high,True,True,high_return
+81,Sahakari Uttar Pradesh Gramin Bank 27,cooperative,False,False,500000,False,True,high,True,True,high_return
+82,Sahakari Uttar Pradesh Nagrik Sahakari Bank 28,cooperative,False,False,500000,False,True,high,True,True,high_return
+83,Sahakari Uttar Pradesh Mahila Sahakari Bank 29,cooperative,False,False,500000,False,True,high,True,True,high_return
+84,Sahakari Uttar Pradesh District Co-op Bank 30,cooperative,False,False,500000,False,True,high,True,True,high_return
+85,District Uttar Pradesh Co-operative Bank 31,cooperative,False,False,500000,False,True,high,True,True,high_return
+86,District Uttar Pradesh Urban Co-operative Bank 32,cooperative,False,False,500000,False,True,high,True,True,high_return
+87,District Uttar Pradesh Gramin Bank 33,cooperative,False,False,500000,False,True,high,True,True,high_return
+88,District Uttar Pradesh Nagrik Sahakari Bank 34,cooperative,False,False,500000,False,True,high,True,True,high_return
+89,District Uttar Pradesh Mahila Sahakari Bank 35,cooperative,False,False,500000,False,True,high,True,True,high_return
+90,District Uttar Pradesh District Co-op Bank 36,cooperative,False,False,500000,False,True,high,True,True,high_return
+91,People's Uttar Pradesh Co-operative Bank 37,cooperative,False,False,500000,False,True,high,True,True,high_return
+92,People's Uttar Pradesh Urban Co-operative Bank 38,cooperative,False,False,500000,False,True,high,True,True,high_return
+93,People's Uttar Pradesh Gramin Bank 39,cooperative,False,False,500000,False,True,high,True,True,high_return
+94,People's Uttar Pradesh Nagrik Sahakari Bank 40,cooperative,False,False,500000,False,True,high,True,True,high_return
+95,People's Uttar Pradesh Mahila Sahakari Bank 41,cooperative,False,False,500000,False,True,high,True,True,high_return
+96,People's Uttar Pradesh District Co-op Bank 42,cooperative,False,False,500000,False,True,high,True,True,high_return
+97,Mercantile Uttar Pradesh Co-operative Bank 43,cooperative,False,False,500000,False,True,high,True,True,high_return
+98,Mercantile Uttar Pradesh Urban Co-operative Bank 44,cooperative,False,False,500000,False,True,high,True,True,high_return
+99,Mercantile Uttar Pradesh Gramin Bank 45,cooperative,False,False,500000,False,True,high,True,True,high_return
+100,Mercantile Uttar Pradesh Nagrik Sahakari Bank 46,cooperative,False,False,500000,False,True,high,True,True,high_return
+101,Mercantile Uttar Pradesh Mahila Sahakari Bank 47,cooperative,False,False,500000,False,True,high,True,True,high_return
+102,Mercantile Uttar Pradesh District Co-op Bank 48,cooperative,False,False,500000,False,True,high,True,True,high_return
+103,Citizen Uttar Pradesh Co-operative Bank 49,cooperative,False,False,500000,False,True,high,True,True,high_return
+104,Citizen Uttar Pradesh Urban Co-operative Bank 50,cooperative,False,False,500000,False,True,high,True,True,high_return
+105,Citizen Uttar Pradesh Gramin Bank 51,cooperative,False,False,500000,False,True,high,True,True,high_return
+106,Citizen Uttar Pradesh Nagrik Sahakari Bank 52,cooperative,False,False,500000,False,True,high,True,True,high_return
+107,Citizen Uttar Pradesh Mahila Sahakari Bank 53,cooperative,False,False,500000,False,True,high,True,True,high_return
+108,Citizen Uttar Pradesh District Co-op Bank 54,cooperative,False,False,500000,False,True,high,True,True,high_return
+109,Krishi Uttar Pradesh Co-operative Bank 55,cooperative,False,False,500000,False,True,high,True,True,high_return
+110,Krishi Uttar Pradesh Urban Co-operative Bank 56,cooperative,False,False,500000,False,True,high,True,True,high_return
+111,Krishi Uttar Pradesh Gramin Bank 57,cooperative,False,False,500000,False,True,high,True,True,high_return
+112,Krishi Uttar Pradesh Nagrik Sahakari Bank 58,cooperative,False,False,500000,False,True,high,True,True,high_return
+113,Krishi Uttar Pradesh Mahila Sahakari Bank 59,cooperative,False,False,500000,False,True,high,True,True,high_return
+114,Krishi Uttar Pradesh District Co-op Bank 60,cooperative,False,False,500000,False,True,high,True,True,high_return
+115,Samriddhi Uttar Pradesh Co-operative Bank 61,cooperative,False,False,500000,False,True,high,True,True,high_return
+116,Samriddhi Uttar Pradesh Urban Co-operative Bank 62,cooperative,False,False,500000,False,True,high,True,True,high_return
+117,Samriddhi Uttar Pradesh Gramin Bank 63,cooperative,False,False,500000,False,True,high,True,True,high_return
+118,Samriddhi Uttar Pradesh Nagrik Sahakari Bank 64,cooperative,False,False,500000,False,True,high,True,True,high_return
+119,Samriddhi Uttar Pradesh Mahila Sahakari Bank 65,cooperative,False,False,500000,False,True,high,True,True,high_return
+120,Samriddhi Uttar Pradesh District Co-op Bank 66,cooperative,False,False,500000,False,True,high,True,True,high_return

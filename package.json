@@ -1,0 +1,23 @@
+{
+  "name": "vernancular_fd_advisor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "stt-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "stt-server": "node stt-server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "multer": "^2.1.1",
+    "node-record-lpcm16": "^1.0.1",
+    "sarvamai": "^1.1.6",
+    "wav": "^1.0.2"
+  }
+}

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Financial Assistant Test</title>
+  <link rel="stylesheet" href="./mini-test.css" />
+</head>
+<body>
+  <main class="card">
+    <h1>API Test</h1>
+    <textarea id="userInput" rows="4" placeholder="Type your question..."></textarea>
+    <button id="sendBtn" type="button">Send</button>
+    <pre id="output">Response will appear here...</pre>
+  </main>
+
+  <script>
+    const userInput = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const output = document.getElementById("output");
+
+    sendBtn.addEventListener("click", async () => {
+      const text = userInput.value.trim();
+      if (!text) {
+        output.textContent = "Please type a message.";
+        return;
+      }
+
+      output.textContent = "Loading...";
+
+      try {
+        const res = await fetch("http://localhost:3000/api/financial-assistant", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userInput: text })
+        });
+
+        const data = await res.json();
+        output.textContent = data.text || JSON.stringify(data, null, 2);
+      } catch (err) {
+        output.textContent = "Error: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>

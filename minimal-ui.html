@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minimal FD Advisor Test</title>
+</head>
+<body>
+  <h3>Minimal FD Advisor Test</h3>
+
+  <input id="msgInput" type="text" placeholder="Type message" />
+  <button id="sendBtn" type="button">Send</button>
+  <button id="startMicBtn" type="button">Start Mic</button>
+  <button id="stopMicBtn" type="button">Stop Mic</button>
+  <button id="speakBtn" type="button">Speak Reply</button>
+  <button id="allowLocationBtn" type="button">Allow Location</button>
+  <button id="denyLocationBtn" type="button">Deny Location</button>
+  <button id="resetBtn" type="button">Reset Session</button>
+
+  <p>Session: <span id="sessionId"></span></p>
+  <pre id="output">Ready</pre>
+
+  <script>
+    const output = document.getElementById("output");
+    const msgInput = document.getElementById("msgInput");
+    const startMicBtn = document.getElementById("startMicBtn");
+    const stopMicBtn = document.getElementById("stopMicBtn");
+    const speakBtn = document.getElementById("speakBtn");
+    const sessionIdSpan = document.getElementById("sessionId");
+    let sessionId = "u" + Math.floor(Math.random() * 100000);
+    let lastReplyText = "";
+    sessionIdSpan.textContent = sessionId;
+    let mediaRecorder = null;
+    let mediaStream = null;
+    let audioChunks = [];
+    let isListening = false;
+
+    function extractTranscript(payload) {
+      if (!payload || typeof payload !== "object") return "";
+      if (typeof payload.transcript === "string") return payload.transcript;
+      if (typeof payload.text === "string") return payload.text;
+      if (typeof payload.output === "string") return payload.output;
+      if (Array.isArray(payload.results) && payload.results.length > 0) {
+        const first = payload.results[0];
+        if (typeof first?.transcript === "string") return first.transcript;
+        if (typeof first?.text === "string") return first.text;
+      }
+      return "";
+    }
+
+    async function transcribeAudioBlob(blob) {
+      const formData = new FormData();
+      formData.append("audio", new File([blob], `recording-${Date.now()}.webm`, { type: blob.type || "audio/webm" }));
+      formData.append("model", "saaras:v3");
+      formData.append("mode", "transcribe");
+      formData.append("language_code", "unknown");
+
+      const res = await fetch("http://localhost:3000/api/transcribe", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || "Transcription failed");
+      }
+
+      return res.json();
+    }
+
+    function appendLog(title, payload) {
+      output.textContent += "\n\n" + title + "\n" + JSON.stringify(payload, null, 2);
+    }
+
+    async function callAdvisor(body) {
+      const res = await fetch("http://localhost:3000/api/fd-advisor-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+      if (data && typeof data.text === "string") {
+        lastReplyText = data.text;
+      }
+      appendLog("Advisor", data);
+      return data;
+    }
+
+    document.getElementById("sendBtn").addEventListener("click", async () => {
+      const msg = msgInput.value.trim();
+      if (!msg) return;
+
+      try {
+        await callAdvisor({
+          session_id: sessionId,
+          userInput: msg,
+          user_language: "auto"
+        });
+        msgInput.value = "";
+      } catch (e) {
+        output.textContent = "Error: " + e.message;
+      }
+    });
+
+    document.getElementById("allowLocationBtn").addEventListener("click", async () => {
+      try {
+        if (!navigator.geolocation) {
+          await callAdvisor({
+            session_id: sessionId,
+            userInput: "yes",
+            user_language: "auto",
+            location_permission: true
+          });
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          let nearby = [];
+          try {
+            const bankRes = await fetch(`http://localhost:3000/api/banks?lat=${lat}&lng=${lng}&limit=3`);
+            const bankData = await bankRes.json();
+            nearby = (bankData.results || []).map((b) => ({
+              name: b.name,
+              distance_km: b.distanceKm
+            }));
+          } catch (_err) {
+            nearby = [];
+          }
+
+          await callAdvisor({
+            session_id: sessionId,
+            userInput: "yes",
+            user_language: "auto",
+            location_permission: true,
+            lat,
+            lng,
+            nearbyBanks: nearby
+          });
+        }, async () => {
+          await callAdvisor({
+            session_id: sessionId,
+            userInput: "yes",
+            user_language: "auto",
+            location_permission: true
+          });
+        });
+      } catch (e) {
+        output.textContent = "Error: " + e.message;
+      }
+    });
+
+    document.getElementById("denyLocationBtn").addEventListener("click", async () => {
+      try {
+        await callAdvisor({
+          session_id: sessionId,
+          userInput: "no",
+          user_language: "auto",
+          location_permission: false
+        });
+      } catch (e) {
+        output.textContent = "Error: " + e.message;
+      }
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      sessionId = "u" + Math.floor(Math.random() * 100000);
+      sessionIdSpan.textContent = sessionId;
+      lastReplyText = "";
+      output.textContent = "Session reset";
+    });
+
+    startMicBtn.addEventListener("click", () => {
+      if (isListening) return;
+
+      if (!navigator.mediaDevices || !window.MediaRecorder) {
+        appendLog("Mic", { status: "MediaRecorder not supported in this browser" });
+        return;
+      }
+
+      navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+        mediaStream = stream;
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.onstart = () => {
+          isListening = true;
+          appendLog("Mic", { status: "recording" });
+        };
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          try {
+            appendLog("Mic", { status: "uploading_to_sarvam" });
+            const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || "audio/webm" });
+            const sttResponse = await transcribeAudioBlob(audioBlob);
+            const transcript = extractTranscript(sttResponse);
+            msgInput.value = transcript || "";
+            appendLog("Sarvam STT", sttResponse);
+          } catch (err) {
+            appendLog("Sarvam STT Error", { error: err.message });
+          } finally {
+            isListening = false;
+            if (mediaStream) {
+              mediaStream.getTracks().forEach((t) => t.stop());
+            }
+            mediaStream = null;
+            mediaRecorder = null;
+            audioChunks = [];
+          }
+        };
+
+        mediaRecorder.start();
+      }).catch((err) => {
+        appendLog("Mic Error", { error: err.message });
+      });
+    });
+
+    stopMicBtn.addEventListener("click", () => {
+      if (!mediaRecorder || !isListening) return;
+      mediaRecorder.stop();
+    });
+
+    speakBtn.addEventListener("click", async () => {
+      const text = lastReplyText || output.textContent || "No reply to speak yet.";
+
+      try {
+        const res = await fetch("http://localhost:3000/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text,
+            target_language_code: "en-IN",
+            model: "bulbul:v2"
+          })
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(errText || "TTS failed");
+        }
+
+        const audioBlob = await res.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        audio.onended = () => URL.revokeObjectURL(audioUrl);
+        await audio.play();
+      } catch (err) {
+        appendLog("Sarvam TTS Error", { error: err.message });
+        return;
+      }
+    });
+  </script>
+</body>
+</html>
