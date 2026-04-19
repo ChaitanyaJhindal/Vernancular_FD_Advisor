@@ -4,6 +4,8 @@ import { Platform } from "react-native";
 
 const API_BASE_URL = "https://vernancular-fd-advisor.onrender.com";
 const TTS_TIMEOUT_MS = 25000;
+const BASE64_ENCODING = FileSystem.EncodingType?.Base64 || "base64";
+const CACHE_DIR = FileSystem.cacheDirectory || FileSystem.documentDirectory;
 
 function inferAudioMetaFromUri(uri, fallbackName = "recording") {
   const safeUri = String(uri || "");
@@ -134,14 +136,18 @@ export async function requestTtsToLocalFile(text, targetLanguageCode = "hi-IN") 
     throw new Error("Empty audio payload from TTS");
   }
 
+  if (!CACHE_DIR) {
+    throw new Error("No writable file directory available for TTS audio");
+  }
+
   const b64 = Buffer.from(bytes).toString("base64");
   const ext = contentType.includes("wav") ? "wav" : "mp3";
-  const localPath = `${FileSystem.cacheDirectory}reply-${Date.now()}-${Math.random()
+  const localPath = `${CACHE_DIR}reply-${Date.now()}-${Math.random()
     .toString(36)
     .slice(2)}.${ext}`;
 
   await FileSystem.writeAsStringAsync(localPath, b64, {
-    encoding: FileSystem.EncodingType.Base64
+    encoding: BASE64_ENCODING
   });
 
   const info = await FileSystem.getInfoAsync(localPath);
