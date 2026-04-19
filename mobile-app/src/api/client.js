@@ -1,8 +1,20 @@
 import * as FileSystem from "expo-file-system";
 import { Buffer } from "buffer";
+import { Platform } from "react-native";
 
 const API_BASE_URL = "https://vernancular-fd-advisor.onrender.com";
 const TTS_TIMEOUT_MS = 25000;
+
+function inferAudioMetaFromUri(uri, fallbackName = "recording") {
+  const safeUri = String(uri || "");
+  const dotIndex = safeUri.lastIndexOf(".");
+  const ext = dotIndex > -1 ? safeUri.slice(dotIndex + 1).toLowerCase() : "";
+
+  if (ext === "wav") return { mime: "audio/wav", filename: `${fallbackName}.wav` };
+  if (ext === "webm") return { mime: "audio/webm", filename: `${fallbackName}.webm` };
+  if (ext === "mp3") return { mime: "audio/mpeg", filename: `${fallbackName}.mp3` };
+  return { mime: "audio/m4a", filename: `${fallbackName}.m4a` };
+}
 
 async function jsonFetch(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -27,12 +39,32 @@ export async function fetchNearbyBanks(lat, lng) {
 }
 
 export async function transcribeFromUri(uri, filename = "recording.m4a") {
+  const safeUri = String(uri || "").trim();
+  if (!safeUri) {
+    throw new Error("Recording URI is empty");
+  }
+
+  const inferred = inferAudioMetaFromUri(safeUri, "recording");
   const form = new FormData();
-  form.append("audio", {
-    uri,
-    name: filename,
-    type: "audio/m4a"
-  });
+
+  if (Platform.OS === "web") {
+    const blobResponse = await fetch(safeUri);
+    const blob = await blobResponse.blob();
+    const blobType = blob.type || inferred.mime;
+    const webFileName = filename || inferred.filename;
+    form.append("audio", blob, webFileName);
+    if (!blob.type && blobType) {
+      // Browsers may omit blob.type for some media recorder outputs; language model can still infer from filename.
+      form.append("audio_mime_hint", blobType);
+    }
+  } else {
+    form.append("audio", {
+      uri: safeUri,
+      name: filename || inferred.filename,
+      type: inferred.mime
+    });
+  }
+
   form.append("mode", "transcribe");
   form.append("model", "saaras:v3");
   form.append("language_code", "unknown");
