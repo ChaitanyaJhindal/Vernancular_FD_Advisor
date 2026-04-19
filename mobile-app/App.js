@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -13,6 +13,7 @@ import {
 import { Audio } from "expo-av";
 import * as Localization from "expo-localization";
 import * as Location from "expo-location";
+import * as FileSystem from "expo-file-system";
 import MicButton from "./src/components/MicButton";
 import ResultCard from "./src/components/ResultCard";
 import AgentAvatar from "./src/components/AgentAvatar";
@@ -40,12 +41,12 @@ function stageToQuestion(stage) {
 export default function App() {
   const [screen, setScreen] = useState("home");
   const [conversationMode, setConversationMode] = useState("voice");
-  const [liveMode, setLiveMode] = useState(false);
   const [inputText, setInputText] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isTtsLoading, setIsTtsLoading] = useState(false);
+  const [ttsError, setTtsError] = useState("");
   const [locationPermission, setLocationPermission] = useState(false);
   const [locationState, setLocationState] = useState({ lat: null, lng: null, nearbyBanks: [] });
   const [recommendations, setRecommendations] = useState([]);
@@ -53,6 +54,7 @@ export default function App() {
 
   const sessionId = useRef(`mobile-${Date.now()}`);
   const soundRef = useRef(null);
+  const playbackIdRef = useRef(0);
   const lang = useMemo(() => detectLangCode(), []);
 
   const { isRecording, startRecording, stopRecording } = useVoiceRecorder();
@@ -60,6 +62,7 @@ export default function App() {
   const stopPlayback = async () => {
     if (soundRef.current) {
       try {
+        soundRef.current.setOnPlaybackStatusUpdate(null);
         await soundRef.current.stopAsync();
       } catch {
         // no-op
@@ -87,7 +90,11 @@ export default function App() {
 
     const autoListenAfter = Boolean(options.autoListenAfter);
 
+    let localUri = "";
+    let sound = null;
+
     try {
+      setTtsError("");
       if (isRecording) {
         await stopRecording();
       }
@@ -95,7 +102,14 @@ export default function App() {
       await stopPlayback();
       setIsTtsLoading(true);
 
-      const localUri = await requestTtsToLocalFile(text, resolveSpeechLocale());
+      const playbackId = Date.now();
+      playbackIdRef.current = playbackId;
+      localUri = await requestTtsToLocalFile(text, resolveSpeechLocale());
+
+      const fileInfo = await FileSystem.getInfoAsync(localUri);
+      if (!fileInfo.exists || !fileInfo.size) {
+        throw new Error("TTS audio file missing or empty");
+      }
 
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
@@ -104,13 +118,30 @@ export default function App() {
         playThroughEarpieceAndroid: false
       });
 
-      const { sound } = await Audio.Sound.createAsync({ uri: localUri });
+      const created = await Audio.Sound.createAsync(
+        { uri: localUri },
+        { shouldPlay: false, progressUpdateIntervalMillis: 120 }
+      );
+      sound = created.sound;
       soundRef.current = sound;
       setIsSpeaking(true);
 
       await new Promise((resolve) => {
         sound.setOnPlaybackStatusUpdate((status) => {
-          if (!status.isLoaded) return;
+          if (playbackIdRef.current !== playbackId) {
+            resolve();
+            return;
+          }
+
+          if (!status.isLoaded) {
+            if (status.error) {
+              setTtsError(`Playback load error: ${status.error}`);
+              setIsSpeaking(false);
+              resolve();
+            }
+            return;
+          }
+
           if (status.didJustFinish) {
             setIsSpeaking(false);
             resolve();
@@ -127,12 +158,33 @@ export default function App() {
       soundRef.current = null;
       setIsTtsLoading(false);
 
-      if (autoListenAfter && conversationMode === "voice" && liveMode && !isRecording) {
+      if (autoListenAfter && conversationMode === "voice" && !isRecording) {
         await startRecording();
       }
-    } catch {
+    } catch (error) {
       setIsSpeaking(false);
       setIsTtsLoading(false);
+      setTtsError(error?.message ? String(error.message) : "Voice playback failed");
+    } finally {
+      if (sound) {
+        try {
+          sound.setOnPlaybackStatusUpdate(null);
+          await sound.unloadAsync();
+        } catch {
+          // no-op
+        }
+        if (soundRef.current === sound) {
+          soundRef.current = null;
+        }
+      }
+
+      if (localUri) {
+        try {
+          await FileSystem.deleteAsync(localUri, { idempotent: true });
+        } catch {
+          // no-op
+        }
+      }
     }
   };
 
@@ -220,12 +272,7 @@ export default function App() {
 
       setLoading(true);
       const transcript = await transcribeFromUri(uri);
-      const text = String(
-        transcript?.transcript ||
-          transcript?.text ||
-          transcript?.output_text ||
-          ""
-      ).trim();
+      const text = String(transcript?.transcript || transcript?.text || transcript?.output_text || "").trim();
 
       if (!text) {
         setLoading(false);
@@ -251,7 +298,7 @@ export default function App() {
         await playText(greeting);
       }
 
-      if (conversationMode === "voice" && liveMode && !isRecording) {
+      if (conversationMode === "voice" && !isRecording) {
         await startRecording();
       }
     }
@@ -284,7 +331,6 @@ export default function App() {
               style={[styles.modePillHome, conversationMode === "text" && styles.modePillHomeActive]}
               onPress={async () => {
                 await stopPlayback();
-                setLiveMode(false);
                 setConversationMode("text");
               }}
             >
@@ -295,23 +341,7 @@ export default function App() {
           </View>
 
           <Text style={styles.modeHint}>Dono mode me aap mic aur text dono use kar sakte hain.</Text>
-
-          {conversationMode === "voice" ? (
-            <Pressable
-              style={[styles.livePill, liveMode && styles.livePillActive]}
-              onPress={async () => {
-                const next = !liveMode;
-                setLiveMode(next);
-                if (!next && isRecording) {
-                  await stopRecording();
-                }
-              }}
-            >
-              <Text style={[styles.livePillText, liveMode && styles.livePillTextActive]}>
-                {liveMode ? "Live Call ON" : "Enable Live Call"}
-              </Text>
-            </Pressable>
-          ) : null}
+          {conversationMode === "voice" ? <Text style={styles.liveHelpText}>Reply ke baad mic auto start hoga</Text> : null}
 
           <MicButton
             recording={isRecording}
@@ -325,7 +355,7 @@ export default function App() {
 
           <Pressable onPress={goConversation} style={styles.secondaryBtn}>
             <Text style={styles.secondaryBtnText}>
-              {conversationMode === "voice" ? "Live baat-cheet shuru karein" : "Text se continue karein"}
+              {conversationMode === "voice" ? "Baat-cheet shuru karein" : "Text se continue karein"}
             </Text>
           </Pressable>
         </View>
@@ -386,7 +416,6 @@ export default function App() {
               setRecommendations([]);
               setSelectedFd(null);
               setMessages([]);
-              setLiveMode(false);
               setScreen("home");
             }}
           >
@@ -412,25 +441,7 @@ export default function App() {
           </Pressable>
         </View>
 
-        {conversationMode === "voice" ? (
-          <View style={styles.liveRow}>
-            <Pressable
-              style={[styles.livePill, liveMode && styles.livePillActive]}
-              onPress={async () => {
-                const next = !liveMode;
-                setLiveMode(next);
-                if (!next && isRecording) {
-                  await stopRecording();
-                }
-              }}
-            >
-              <Text style={[styles.livePillText, liveMode && styles.livePillTextActive]}>
-                {liveMode ? "Live Call ON" : "Start Live Call"}
-              </Text>
-            </Pressable>
-            <Text style={styles.liveHelpText}>{liveMode ? "Reply ke baad mic auto start hoga" : "Manual mic: tap to talk"}</Text>
-          </View>
-        ) : null}
+        {conversationMode === "voice" ? <Text style={styles.liveHelpText}>Reply ke baad mic auto start hoga</Text> : null}
 
         <View style={styles.modeRowConversation}>
           <Pressable
@@ -450,7 +461,6 @@ export default function App() {
             style={[styles.modePillConversation, conversationMode === "text" && styles.modePillConversationActive]}
             onPress={async () => {
               await stopPlayback();
-              setLiveMode(false);
               setConversationMode("text");
             }}
           >
@@ -488,6 +498,8 @@ export default function App() {
           </View>
         ) : null}
 
+        {ttsError ? <Text style={styles.errorText}>Voice issue: {ttsError}</Text> : null}
+
         <View style={styles.inputRow}>
           <TextInput
             style={styles.input}
@@ -504,9 +516,7 @@ export default function App() {
           <MicButton recording={isRecording} onPress={onMicPress} />
           <Text style={styles.bottomHint}>
             {conversationMode === "voice"
-              ? liveMode
-                ? "Live ON: boliye, main jawab dekar phir sunungi."
-                : "Voice mode ON: main jawab bolkar bataungi."
+              ? "Voice mode ON: boliye, main jawab dekar phir sunungi."
               : "Text mode ON: chaho to mic bhi use kar sakte ho."}
           </Text>
         </View>
@@ -582,32 +592,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: 12
   },
-  liveRow: {
-    marginBottom: 10,
-    alignItems: "flex-start",
-    gap: 6
-  },
-  livePill: {
-    borderRadius: radii.full,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    paddingHorizontal: 14,
-    paddingVertical: 8
-  },
-  livePillActive: {
-    backgroundColor: colors.success,
-    borderColor: colors.success
-  },
-  livePillText: {
-    fontSize: 13,
-    color: colors.primary,
-    fontWeight: "800"
-  },
-  livePillTextActive: {
-    color: "#FFFFFF"
-  },
   liveHelpText: {
+    marginBottom: 10,
     fontSize: 13,
     color: colors.subText,
     fontWeight: "700"
@@ -732,6 +718,12 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: colors.subText,
+    fontWeight: "700"
+  },
+  errorText: {
+    marginBottom: 8,
+    fontSize: 13,
+    color: colors.danger,
     fontWeight: "700"
   },
   inputRow: {

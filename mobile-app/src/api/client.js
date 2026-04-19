@@ -2,6 +2,7 @@ import * as FileSystem from "expo-file-system";
 import { Buffer } from "buffer";
 
 const API_BASE_URL = "https://vernancular-fd-advisor.onrender.com";
+const TTS_TIMEOUT_MS = 25000;
 
 async function jsonFetch(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -57,25 +58,64 @@ export async function askFdAdvisor(payload) {
 }
 
 export async function requestTtsToLocalFile(text, targetLanguageCode = "hi-IN") {
-  const response = await fetch(`${API_BASE_URL}/api/tts`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      text,
-      target_language_code: targetLanguageCode
-    })
-  });
+  const trimmedText = String(text || "").trim();
+  if (!trimmedText) {
+    throw new Error("TTS text is empty");
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TTS_TIMEOUT_MS);
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}/api/tts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: trimmedText,
+        target_language_code: targetLanguageCode
+      }),
+      signal: controller.signal
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("TTS request timed out");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     const err = await response.text();
     throw new Error(err || "TTS failed");
   }
 
+  const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+  if (!contentType.includes("audio")) {
+    const raw = await response.text();
+    throw new Error(raw || `Unexpected TTS response type: ${contentType || "unknown"}`);
+  }
+
   const bytes = await response.arrayBuffer();
+  if (!bytes || bytes.byteLength === 0) {
+    throw new Error("Empty audio payload from TTS");
+  }
+
   const b64 = Buffer.from(bytes).toString("base64");
-  const localPath = `${FileSystem.cacheDirectory}reply-${Date.now()}.mp3`;
+  const ext = contentType.includes("wav") ? "wav" : "mp3";
+  const localPath = `${FileSystem.cacheDirectory}reply-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}.${ext}`;
+
   await FileSystem.writeAsStringAsync(localPath, b64, {
     encoding: FileSystem.EncodingType.Base64
   });
+
+  const info = await FileSystem.getInfoAsync(localPath);
+  if (!info.exists || !info.size) {
+    throw new Error("TTS audio file write failed");
+  }
+
   return localPath;
 }
