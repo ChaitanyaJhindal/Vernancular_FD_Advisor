@@ -2,6 +2,7 @@
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -106,9 +107,12 @@ export default function App() {
       playbackIdRef.current = playbackId;
       localUri = await requestTtsToLocalFile(text, resolveSpeechLocale());
 
-      const fileInfo = await FileSystem.getInfoAsync(localUri);
-      if (!fileInfo.exists || !fileInfo.size) {
-        throw new Error("TTS audio file missing or empty");
+      const isWebUrl = Platform.OS === "web" && (localUri.startsWith("blob:") || localUri.startsWith("data:"));
+      if (!isWebUrl) {
+        const fileInfo = await FileSystem.getInfoAsync(localUri);
+        if (!fileInfo.exists || !fileInfo.size) {
+          throw new Error("TTS audio file missing or empty");
+        }
       }
 
       await Audio.setAudioModeAsync({
@@ -180,7 +184,12 @@ export default function App() {
 
       if (localUri) {
         try {
-          await FileSystem.deleteAsync(localUri, { idempotent: true });
+          const isBlobUrl = Platform.OS === "web" && localUri.startsWith("blob:");
+          if (isBlobUrl && typeof URL !== "undefined" && typeof URL.revokeObjectURL === "function") {
+            URL.revokeObjectURL(localUri);
+          } else if (!(Platform.OS === "web" && localUri.startsWith("data:"))) {
+            await FileSystem.deleteAsync(localUri, { idempotent: true });
+          }
         } catch {
           // no-op
         }
