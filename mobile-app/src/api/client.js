@@ -1,10 +1,30 @@
 import * as FileSystem from "expo-file-system";
+import * as LegacyFileSystem from "expo-file-system/legacy";
 import { Buffer } from "buffer";
 import { Platform } from "react-native";
 
 const API_BASE_URL = "https://vernancular-fd-advisor.onrender.com";
 const TTS_TIMEOUT_MS = 25000;
-const CACHE_DIR = FileSystem.cacheDirectory || FileSystem.documentDirectory;
+
+function resolveWritableDir() {
+  const legacyDir =
+    FileSystem.cacheDirectory ||
+    FileSystem.documentDirectory ||
+    LegacyFileSystem.cacheDirectory ||
+    LegacyFileSystem.documentDirectory;
+  const modernDir = FileSystem.Paths?.cache?.uri || FileSystem.Paths?.document?.uri;
+  const selected = legacyDir || modernDir || "";
+  if (!selected) return "";
+  return selected.endsWith("/") ? selected : `${selected}/`;
+}
+
+function getWriteAsStringAsync() {
+  return FileSystem.writeAsStringAsync || LegacyFileSystem.writeAsStringAsync;
+}
+
+function getInfoAsync() {
+  return FileSystem.getInfoAsync || LegacyFileSystem.getInfoAsync;
+}
 
 function inferAudioMetaFromUri(uri, fallbackName = "recording") {
   const safeUri = String(uri || "");
@@ -146,21 +166,28 @@ export async function requestTtsToLocalFile(text, targetLanguageCode = "hi-IN") 
     return `data:${audioType};base64,${b64Web}`;
   }
 
-  if (!CACHE_DIR) {
+  const writableDir = resolveWritableDir();
+  if (!writableDir) {
     throw new Error("No writable file directory available for TTS audio");
+  }
+
+  const writeAsStringAsync = getWriteAsStringAsync();
+  const getInfo = getInfoAsync();
+  if (!writeAsStringAsync || !getInfo) {
+    throw new Error("FileSystem write APIs are unavailable in this runtime");
   }
 
   const b64 = Buffer.from(bytes).toString("base64");
   const ext = contentType.includes("wav") ? "wav" : "mp3";
-  const localPath = `${CACHE_DIR}reply-${Date.now()}-${Math.random()
+  const localPath = `${writableDir}reply-${Date.now()}-${Math.random()
     .toString(36)
     .slice(2)}.${ext}`;
 
-  await FileSystem.writeAsStringAsync(localPath, b64, {
+  await writeAsStringAsync(localPath, b64, {
     encoding: "base64"
   });
 
-  const info = await FileSystem.getInfoAsync(localPath);
+  const info = await getInfo(localPath);
   if (!info.exists || !info.size) {
     throw new Error("TTS audio file write failed");
   }
