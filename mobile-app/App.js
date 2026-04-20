@@ -35,40 +35,27 @@ function detectLangCode() {
   const tagCode = languageTag.includes("-") ? languageTag.split("-")[0] : languageTag;
   const candidate = languageCode || tagCode;
   if (SUPPORTED_LANGUAGE_CODES.has(candidate)) return candidate;
-  return "hi";
+  return "en";
 }
 
 const LANGUAGE_OPTIONS = [
-  { code: "hi", locale: "hi-IN", label: "Hindi" },
-  { code: "as", locale: "as-IN", label: "Assamese" },
-  { code: "bn", locale: "bn-IN", label: "Bengali" },
-  { code: "ur", locale: "ur-IN", label: "Urdu" },
-  { code: "kn", locale: "kn-IN", label: "Kannada" },
-  { code: "ne", locale: "ne-IN", label: "Nepali" },
-  { code: "ml", locale: "ml-IN", label: "Malayalam" },
-  { code: "kok", locale: "kok-IN", label: "Konkani" },
-  { code: "mr", locale: "mr-IN", label: "Marathi" },
-  { code: "ks", locale: "ks-IN", label: "Kashmiri" },
-  { code: "od", locale: "od-IN", label: "Odia" },
-  { code: "sd", locale: "sd-IN", label: "Sindhi" },
-  { code: "pa", locale: "pa-IN", label: "Punjabi" },
-  { code: "sa", locale: "sa-IN", label: "Sanskrit" },
-  { code: "ta", locale: "ta-IN", label: "Tamil" },
-  { code: "sat", locale: "sat-IN", label: "Santali" },
-  { code: "te", locale: "te-IN", label: "Telugu" },
-  { code: "mni", locale: "mni-IN", label: "Manipuri" },
   { code: "en", locale: "en-IN", label: "English" },
-  { code: "brx", locale: "brx-IN", label: "Bodo" },
+  { code: "bn", locale: "bn-IN", label: "Bengali" },
   { code: "gu", locale: "gu-IN", label: "Gujarati" },
-  { code: "mai", locale: "mai-IN", label: "Maithili" },
-  { code: "doi", locale: "doi-IN", label: "Dogri" }
+  { code: "kn", locale: "kn-IN", label: "Kannada" },
+  { code: "ml", locale: "ml-IN", label: "Malayalam" },
+  { code: "mr", locale: "mr-IN", label: "Marathi" },
+  { code: "od", locale: "od-IN", label: "Odia" },
+  { code: "pa", locale: "pa-IN", label: "Punjabi" },
+  { code: "ta", locale: "ta-IN", label: "Tamil" },
+  { code: "te", locale: "te-IN", label: "Telugu" }
 ];
 
 const SUPPORTED_LANGUAGE_CODES = new Set(LANGUAGE_OPTIONS.map((x) => x.code));
 
 function getLocaleFromLanguageCode(code) {
   const match = LANGUAGE_OPTIONS.find((item) => item.code === code);
-  return match?.locale || "hi-IN";
+  return match?.locale || "en-IN";
 }
 
 function getUiText(lang) {
