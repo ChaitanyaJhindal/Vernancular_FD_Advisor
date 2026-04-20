@@ -329,44 +329,47 @@ router.post("/api/fd-advisor-chat", async (req, res) => {
       advisorSessions.set(sessionId, existing);
 
       const payload = createResponseByLang(lang, finalText);
-      const localizedRecommendations = recommendations.map((r) => ({
-        ...r,
+        if (quickAmount) existing.amount = quickAmount;
+        if (quickTenure) existing.tenureMonths = quickTenure;
+
+        if (existing.amount && existing.tenureMonths) {
+          existing.stage = "awaiting_tenure";
+          advisorSessions.set(sessionId, existing);
+          // Continue below into awaiting_tenure handler to produce final response directly.
+        } else if (existing.amount) {
         expected_return: localizeDigits(r.expected_return, lang),
         interest_rate: localizeDigits(r.interest_rate, lang),
         reason: localizeDigits(r.reason, lang),
         distance: localizeDigits(r.distance, lang)
       }));
       res.json({
-        ...payload,
-        session_id: sessionId,
-        stage: existing.stage,
-        recommendations: localizedRecommendations,
+        } else if (existing.tenureMonths) {
         memory: { amount: existing.amount, tenure_months: existing.tenureMonths }
       });
       return;
     } catch {
       const payload = createResponseByLang(lang, "Unable to generate FD suggestions right now. Please try again.");
       res.status(500).json({ ...payload, session_id: sessionId, stage: existing.stage, memory: { amount: existing.amount, tenure_months: existing.tenureMonths } });
-      return;
-    }
-  }
+        } else if (!detectSavingsIntent(userInput)) {
 
   if (existing.stage === "done") {
     const maybeAmount = extractAmountFromText(userInput);
     const maybeTenure = extractTenureMonthsFromText(userInput);
 
+        } else {
+          existing.stage = "awaiting_amount";
+          const msg = flowText(lang, "askAmount");
+          advisorSessions.set(sessionId, existing);
+          const payload = createResponseByLang(lang, msg);
+          res.json({ ...payload, session_id: sessionId, stage: existing.stage, memory: { amount: existing.amount, tenure_months: existing.tenureMonths } });
+          return;
     if (maybeAmount) existing.amount = maybeAmount;
-    if (maybeTenure) existing.tenureMonths = maybeTenure;
-
-    if (!existing.amount) {
-      existing.stage = "awaiting_amount";
-      advisorSessions.set(sessionId, existing);
-      const payload = createResponseByLang(lang, flowText(lang, "askAmount"));
-      res.json({ ...payload, session_id: sessionId, stage: existing.stage, memory: { amount: existing.amount, tenure_months: existing.tenureMonths } });
       return;
     }
 
-    if (!existing.tenureMonths) {
+        const amount = extractAmountFromText(userInput) || existing.amount;
+        const quickTenure = extractTenureMonthsFromText(userInput) || existing.tenureMonths;
+
       existing.stage = "awaiting_tenure";
       advisorSessions.set(sessionId, existing);
       const prefix = flowText(lang, "rememberedContext", {
@@ -376,17 +379,24 @@ router.post("/api/fd-advisor-chat", async (req, res) => {
       const payload = createResponseByLang(lang, `${prefix} ${flowText(lang, "askTenure")}`);
       res.json({ ...payload, session_id: sessionId, stage: existing.stage, memory: { amount: existing.amount, tenure_months: existing.tenureMonths } });
       return;
-    }
 
-    existing.stage = "awaiting_tenure";
-    advisorSessions.set(sessionId, existing);
-    const msg = flowText(lang, "askTenure");
-    const payload = createResponseByLang(lang, msg);
-    res.json({ ...payload, session_id: sessionId, stage: existing.stage, memory: { amount: existing.amount, tenure_months: existing.tenureMonths } });
+        if (quickTenure) {
+          existing.tenureMonths = quickTenure;
+          existing.stage = "awaiting_tenure";
+          advisorSessions.set(sessionId, existing);
+          // Continue below into awaiting_tenure handler to produce final response directly.
+        } else {
+          existing.stage = "awaiting_tenure";
+          advisorSessions.set(sessionId, existing);
+          const msg = flowText(lang, "askTenure");
+          const payload = createResponseByLang(lang, msg);
+          res.json({ ...payload, session_id: sessionId, stage: existing.stage, memory: { amount: existing.amount, tenure_months: existing.tenureMonths } });
+          return;
+        }
     return;
   }
 
-  existing.stage = "awaiting_amount";
+        const tenureMonths = extractTenureMonthsFromText(userInput) || existing.tenureMonths;
   existing.amount = null;
   existing.tenureMonths = null;
   advisorSessions.set(sessionId, existing);
