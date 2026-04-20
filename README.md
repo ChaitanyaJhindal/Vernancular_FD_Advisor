@@ -6,6 +6,26 @@ It includes:
 - a Node.js backend for chat flow, recommendations, STT, and TTS
 - an Expo React Native mobile app for voice and text conversations
 
+## Project Overview
+
+This project helps users discover suitable fixed-deposit options in their preferred language through a conversational interface.
+It is designed for accessibility-first financial guidance, especially for users who are more comfortable speaking than typing.
+
+Core value:
+- multilingual interaction for Indian users
+- voice-first and text-first interaction modes
+- practical FD recommendations using structured bank and product data
+
+## How It Works
+
+1. The user starts a conversation in the mobile app using voice or text.
+2. If voice is used, speech is transcribed by the backend STT endpoint.
+3. The advisor API tracks session context such as amount, tenure, and user preferences.
+4. The backend recommendation engine evaluates FD products from CSV datasets and selects top options.
+5. The LLM service converts recommendation data into a natural-language explanation in the selected language.
+6. The response is returned to the app and optionally converted to speech using the TTS endpoint.
+7. The user can continue the conversation, refine inputs, and receive updated recommendations.
+
 ## Supported Languages
 
 | Language                | BCP-47 Code |
@@ -27,10 +47,10 @@ It includes:
 ```mermaid
 flowchart LR
     A[Mobile App Expo React Native] -->|HTTP JSON| B[Express Backend]
-    A -->|Audio Upload| C[/api/transcribe STT]
-    A -->|Text for speech| D[/api/tts TTS]
+   A -->|Audio Upload| C["/api/transcribe (STT)"]
+   A -->|Text for speech| D["/api/tts (TTS)"]
 
-    B --> E[/api/fd-advisor-chat]
+   B --> E["/api/fd-advisor-chat"]
     E --> F[Advisor Session State Machine]
     F --> G[LLM Reasoning Service]
     F --> H[FD Recommendation Engine]
