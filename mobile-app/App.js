@@ -15,6 +15,7 @@ import { Audio } from "expo-av";
 import * as Localization from "expo-localization";
 import * as Location from "expo-location";
 import * as FileSystem from "expo-file-system";
+import * as LegacyFileSystem from "expo-file-system/legacy";
 import MicButton from "./src/components/MicButton";
 import ResultCard from "./src/components/ResultCard";
 import AgentAvatar from "./src/components/AgentAvatar";
@@ -109,7 +110,8 @@ export default function App() {
 
       const isWebUrl = Platform.OS === "web" && (localUri.startsWith("blob:") || localUri.startsWith("data:"));
       if (!isWebUrl) {
-        const fileInfo = await FileSystem.getInfoAsync(localUri);
+        const getInfoAsync = LegacyFileSystem.getInfoAsync || FileSystem.getInfoAsync;
+        const fileInfo = await getInfoAsync(localUri);
         if (!fileInfo.exists || !fileInfo.size) {
           throw new Error("TTS audio file missing or empty");
         }
@@ -188,7 +190,8 @@ export default function App() {
           if (isBlobUrl && typeof URL !== "undefined" && typeof URL.revokeObjectURL === "function") {
             URL.revokeObjectURL(localUri);
           } else if (!(Platform.OS === "web" && localUri.startsWith("data:"))) {
-            await FileSystem.deleteAsync(localUri, { idempotent: true });
+            const deleteAsync = LegacyFileSystem.deleteAsync || FileSystem.deleteAsync;
+            await deleteAsync(localUri, { idempotent: true });
           }
         } catch {
           // no-op

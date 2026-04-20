@@ -8,10 +8,10 @@ const TTS_TIMEOUT_MS = 25000;
 
 function resolveWritableDir() {
   const legacyDir =
-    FileSystem.cacheDirectory ||
-    FileSystem.documentDirectory ||
     LegacyFileSystem.cacheDirectory ||
-    LegacyFileSystem.documentDirectory;
+    LegacyFileSystem.documentDirectory ||
+    FileSystem.cacheDirectory ||
+    FileSystem.documentDirectory;
   const modernDir = FileSystem.Paths?.cache?.uri || FileSystem.Paths?.document?.uri;
   const selected = legacyDir || modernDir || "";
   if (!selected) return "";
@@ -19,11 +19,11 @@ function resolveWritableDir() {
 }
 
 function getWriteAsStringAsync() {
-  return FileSystem.writeAsStringAsync || LegacyFileSystem.writeAsStringAsync;
+  return LegacyFileSystem.writeAsStringAsync || FileSystem.writeAsStringAsync;
 }
 
 function getInfoAsync() {
-  return FileSystem.getInfoAsync || LegacyFileSystem.getInfoAsync;
+  return LegacyFileSystem.getInfoAsync || FileSystem.getInfoAsync;
 }
 
 function inferAudioMetaFromUri(uri, fallbackName = "recording") {
