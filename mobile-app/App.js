@@ -34,53 +34,166 @@ function detectLangCode() {
   return "hi";
 }
 
+const LANGUAGE_OPTIONS = [
+  { code: "hi", label: "Hindi" },
+  { code: "en", label: "English" },
+  { code: "ta", label: "Tamil" },
+  { code: "gu", label: "Gujarati" }
+];
+
 function getUiText(lang) {
   if (lang === "en") {
     return {
-      greeting: "Hello, ready to find the best FD for you?",
-      askAmount: "How much amount do you want to invest?",
-      askTenure: "For how many months do you want the FD?",
-      genericPrompt: "Tell me your preference and I will help.",
+      greeting: "Hello, I am your FD advisor.",
+      languageSwitched: "Language updated. I will continue in English.",
+      chooseLanguage: "Choose Language",
       notUnderstood: "I could not understand that. Please say it again.",
       processing: "Thinking...",
       inputPlaceholder: "Type your message",
-      repeatHint: "Please answer the last question so I can continue without repeating.",
-      repeatHardStop: "I am still waiting for your previous answer. Please share amount or tenure so I can proceed."
+      modeVoice: "Voice + Listen",
+      modeText: "Text Mode",
+      modeHint: "You can use both voice and text anytime.",
+      autoListenHint: "Mic auto starts after every assistant reply.",
+      startChatVoice: "Start conversation",
+      startChatText: "Continue with text",
+      conversationTitle: "Conversation",
+      stopVoice: "Stop Voice",
+      send: "Send",
+      topOptions: "Top 3 FD Options",
+      askAgain: "Ask again",
+      confirmQuestion: "Do you want to proceed with this FD?",
+      yes: "Yes",
+      no: "No",
+      submitted: "Your FD request has been submitted",
+      checkAgain: "Check again",
+      bottomHintVoice: "Voice mode ON: speak freely, I will reply and listen again.",
+      bottomHintText: "Text mode ON: you can still use mic anytime.",
+      avatarHomeIdle: "Your FD advisor",
+      avatarSpeaking: "I am speaking...",
+      avatarListening: "I am listening...",
+      avatarWaiting: "I am here, ask me anything"
+    };
+  }
+
+  if (lang === "ta") {
+    return {
+      greeting: "வணக்கம், நான் உங்கள் FD ஆலோசகர்.",
+      languageSwitched: "மொழி மாற்றப்பட்டது. இனி தமிழில் தொடர்கிறேன்.",
+      chooseLanguage: "மொழியை தேர்வு செய்யவும்",
+      notUnderstood: "எனக்கு புரியவில்லை, தயவு செய்து மீண்டும் சொல்லுங்கள்.",
+      processing: "சிந்தித்து கொண்டிருக்கிறேன்...",
+      inputPlaceholder: "உங்கள் செய்தியை எழுதுங்கள்",
+      modeVoice: "குரல் + கேட்பு",
+      modeText: "உரை முறை",
+      modeHint: "எப்போதும் குரலும் உரையும் பயன்படுத்தலாம்.",
+      autoListenHint: "ஒவ்வொரு பதிலிற்குப் பிறகும் மைக் தானாக தொடங்கும்.",
+      startChatVoice: "உரையாடலை தொடங்குங்கள்",
+      startChatText: "உரையுடன் தொடரவும்",
+      conversationTitle: "உரையாடல்",
+      stopVoice: "குரலை நிறுத்து",
+      send: "அனுப்பு",
+      topOptions: "சிறந்த 3 FD தேர்வுகள்",
+      askAgain: "மீண்டும் கேளுங்கள்",
+      confirmQuestion: "இந்த FD-ஐ தொடர வேண்டுமா?",
+      yes: "ஆம்",
+      no: "இல்லை",
+      submitted: "உங்கள் FD கோரிக்கை அனுப்பப்பட்டது",
+      checkAgain: "மீண்டும் சரிபார்",
+      bottomHintVoice: "குரல் முறை ON: சுதந்திரமாக பேசுங்கள்.",
+      bottomHintText: "உரை முறை ON: மைக்கையும் பயன்படுத்தலாம்.",
+      avatarHomeIdle: "உங்கள் FD ஆலோசகர்",
+      avatarSpeaking: "நான் பேசுகிறேன்...",
+      avatarListening: "நான் கேட்கிறேன்...",
+      avatarWaiting: "நான் இங்கே இருக்கிறேன், கேளுங்கள்"
+    };
+  }
+
+  if (lang === "gu") {
+    return {
+      greeting: "નમસ્તે, હું તમારો FD સલાહકાર છું.",
+      languageSwitched: "ભાષા બદલાઈ ગઈ છે. હવે હું ગુજરાતીમાં જવાબ આપીશ.",
+      chooseLanguage: "ભાષા પસંદ કરો",
+      notUnderstood: "મને સમજાયું નહીં, કૃપા કરીને ફરી કહો.",
+      processing: "વિચાર કરી રહ્યો છું...",
+      inputPlaceholder: "તમારો સંદેશ લખો",
+      modeVoice: "વૉઇસ + લિસન",
+      modeText: "ટેક્સ્ટ મોડ",
+      modeHint: "તમે અવાજ અને ટેક્સ્ટ બન્ને ઉપયોગ કરી શકો છો.",
+      autoListenHint: "દરેક જવાબ પછી માઇક ફરી શરૂ થશે.",
+      startChatVoice: "ચેટ શરૂ કરો",
+      startChatText: "ટેક્સ્ટથી ચાલુ રાખો",
+      conversationTitle: "વાતચીત",
+      stopVoice: "વૉઇસ બંધ કરો",
+      send: "મોકલો",
+      topOptions: "ટોપ 3 FD વિકલ્પો",
+      askAgain: "ફરી પૂછો",
+      confirmQuestion: "શું તમે આ FD આગળ વધારવા માંગો છો?",
+      yes: "હા",
+      no: "ના",
+      submitted: "તમારી FD વિનંતી સબમિટ થઈ ગઈ છે",
+      checkAgain: "ફરી તપાસો",
+      bottomHintVoice: "વૉઇસ મોડ ON: બોલો, હું જવાબ આપી ફરી સાંભળું.",
+      bottomHintText: "ટેક્સ્ટ મોડ ON: માઇક પણ ઉપયોગ કરી શકો છો.",
+      avatarHomeIdle: "તમારો FD સલાહકાર",
+      avatarSpeaking: "હું બોલી રહ્યો છું...",
+      avatarListening: "હું સાંભળી રહ્યો છું...",
+      avatarWaiting: "હું અહીં છું, પૂછો"
     };
   }
 
   return {
-    greeting: "Namaste, FD ke liye taiyaar hain?",
-    askAmount: "Kitna paisa invest karna chahte hain?",
-    askTenure: "Kitne time ke liye FD karna chahte hain?",
-    genericPrompt: "Boliyega, main madad karta hoon.",
+    greeting: "Namaste, main aapki FD advisor hoon.",
+    languageSwitched: "Language update ho gaya hai. Ab main Hindi me baat karungi.",
+    chooseLanguage: "Bhasha chuniyega",
     notUnderstood: "Samajh nahi aaya, dobara bolenge?",
     processing: "Soch rahe hain...",
     inputPlaceholder: "Yahan type karein",
-    repeatHint: "Aap pichhle sawal ka answer de dijiye, fir main aage continue karungi.",
-    repeatHardStop: "Main abhi bhi aapke pichhle answer ka wait kar rahi hoon. Amount ya tenure bata dijiye."
+    modeVoice: "Voice + Listen",
+    modeText: "Text Mode",
+    modeHint: "Dono mode me aap mic aur text dono use kar sakte hain.",
+    autoListenHint: "Reply ke baad mic auto start hoga.",
+    startChatVoice: "Baat-cheet shuru karein",
+    startChatText: "Text se continue karein",
+    conversationTitle: "Conversation",
+    stopVoice: "Stop Voice",
+    send: "Send",
+    topOptions: "Top 3 FD Options",
+    askAgain: "Phir se puchhein",
+    confirmQuestion: "Kya aap FD banana chahte hain?",
+    yes: "Haan",
+    no: "Nahi",
+    submitted: "Aapki FD request submit ho gayi hai",
+    checkAgain: "Phir se check karein",
+    bottomHintVoice: "Voice mode ON: boliye, main jawab dekar phir sunungi.",
+    bottomHintText: "Text mode ON: chaho to mic bhi use kar sakte ho.",
+    avatarHomeIdle: "Aapki FD advisor",
+    avatarSpeaking: "Main bol rahi hoon...",
+    avatarListening: "Main sun rahi hoon...",
+    avatarWaiting: "Main yahin hoon, poochiye"
   };
 }
 
-function stageToQuestion(stage, lang) {
-  const ui = getUiText(lang);
-  if (stage === "awaiting_amount") return ui.askAmount;
-  if (stage === "awaiting_tenure") return ui.askTenure;
-  return ui.genericPrompt;
+function stripThinkingBlocks(text) {
+  const raw = String(text || "");
+  const removedPaired = raw.replace(/<think>[\s\S]*?<\/think>/gi, " ");
+  const removedDangling = removedPaired.replace(/<think>[\s\S]*$/gi, " ");
+  return removedDangling.replace(/\s+/g, " ").trim();
 }
 
-function normalizeMessage(text) {
-  return String(text || "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
+function englishLetterRatio(text) {
+  const raw = String(text || "");
+  const letters = raw.match(/[A-Za-z]/g) || [];
+  const devanagari = raw.match(/[\u0900-\u097F]/g) || [];
+  const total = letters.length + devanagari.length;
+  if (!total) return 0;
+  return letters.length / total;
 }
 
-function refineRepeatedBotText(rawText, repeatCount, lang) {
-  const ui = getUiText(lang);
-  if (repeatCount <= 0) return rawText;
-  if (repeatCount === 1) return `${rawText}\n\n${ui.repeatHint}`;
-  return ui.repeatHardStop;
+function refineVisibleAssistantText(rawText, lang) {
+  const cleaned = stripThinkingBlocks(rawText);
+  if (cleaned) return cleaned;
+  if (lang !== "en" && rawText && englishLetterRatio(rawText) > 0.85) return rawText;
+  return "";
 }
 
 export default function App() {
@@ -100,9 +213,10 @@ export default function App() {
   const sessionId = useRef(`mobile-${Date.now()}`);
   const soundRef = useRef(null);
   const playbackIdRef = useRef(0);
-  const lang = useMemo(() => detectLangCode(), []);
-  const uiText = useMemo(() => getUiText(lang), [lang]);
-  const lastBotRef = useRef({ normalized: "", repeatCount: 0 });
+  const deviceLang = useMemo(() => detectLangCode(), []);
+  const [selectedLanguage, setSelectedLanguage] = useState(deviceLang);
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const uiText = useMemo(() => getUiText(selectedLanguage), [selectedLanguage]);
 
   const { isRecording, startRecording, stopRecording } = useVoiceRecorder();
 
@@ -126,11 +240,31 @@ export default function App() {
   };
 
   const resolveSpeechLocale = () => {
-    if (lang === "en") return "en-IN";
-    if (lang === "ta") return "ta-IN";
-    if (lang === "gu") return "gu-IN";
+    if (selectedLanguage === "en") return "en-IN";
+    if (selectedLanguage === "ta") return "ta-IN";
+    if (selectedLanguage === "gu") return "gu-IN";
     return "hi-IN";
   };
+
+  const changeLanguage = async (nextLanguage) => {
+    if (!nextLanguage || nextLanguage === selectedLanguage) {
+      setShowLanguageMenu(false);
+      return;
+    }
+
+    setSelectedLanguage(nextLanguage);
+    setShowLanguageMenu(false);
+
+    if (screen === "conversation") {
+      const languageMessage = getUiText(nextLanguage).languageSwitched;
+      setMessages((prev) => [...prev, { role: "bot", text: languageMessage }]);
+      if (conversationMode === "voice") {
+        await playText(languageMessage);
+      }
+    }
+  };
+
+  const sendDisabled = loading || !inputText.trim();
 
   const playText = async (text, options = {}) => {
     if (!text) return;
@@ -285,30 +419,24 @@ export default function App() {
 
     setLoading(true);
     setMessages((prev) => [...prev, { role: "user", text: userInput }]);
-    lastBotRef.current = { normalized: "", repeatCount: 0 };
 
     try {
       const response = await askFdAdvisor({
         session_id: sessionId.current,
         userInput,
-        user_language: lang,
-        response_language: lang,
+        user_language: selectedLanguage,
+        response_language: selectedLanguage,
         reasoning_mode: "llm_only",
-        frontend_directive: "Use LLM reasoning only. Respond in same language as user_language.",
+        frontend_directive:
+          "Use only final answer format. Keep response concise, natural, and in response_language. Avoid repetitive fixed questions.",
         location_permission: locationPermission,
         nearbyBanks: locationState.nearbyBanks,
         lat: locationState.lat,
         lng: locationState.lng
       });
 
-      const incomingBot = String(response?.text || stageToQuestion(response?.stage, lang)).trim();
-      const normalizedIncoming = normalizeMessage(incomingBot);
-      const repeatCount =
-        normalizedIncoming && normalizedIncoming === lastBotRef.current.normalized
-          ? lastBotRef.current.repeatCount + 1
-          : 0;
-      lastBotRef.current = { normalized: normalizedIncoming, repeatCount };
-      const botText = refineRepeatedBotText(incomingBot, repeatCount, lang);
+      const rawBotText = String(response?.text || "").trim();
+      const botText = refineVisibleAssistantText(rawBotText, selectedLanguage) || uiText.notUnderstood;
       setMessages((prev) => [...prev, { role: "bot", text: botText }]);
 
       if (conversationMode === "voice") {
@@ -355,19 +483,18 @@ export default function App() {
     }
   };
 
-  const goConversation = async () => {
+  const goConversation = async (startListening = true) => {
     setScreen("conversation");
 
     if (messages.length === 0) {
       const greeting = uiText.greeting;
       setMessages([{ role: "bot", text: greeting }]);
-      lastBotRef.current = { normalized: normalizeMessage(greeting), repeatCount: 0 };
 
       if (conversationMode === "voice") {
         await playText(greeting);
       }
 
-      if (conversationMode === "voice" && !isRecording) {
+      if (startListening && conversationMode === "voice" && !isRecording) {
         await startRecording();
       }
     }
@@ -380,12 +507,30 @@ export default function App() {
           <Text style={styles.brand}>Vernacular FD Advisor</Text>
           <AgentAvatar
             speaking={conversationMode === "voice" && isSpeaking}
-            label={conversationMode === "voice" && isSpeaking ? "Advisor bol rahi hain..." : "Aapki FD didi"}
+            label={conversationMode === "voice" && isSpeaking ? uiText.avatarSpeaking : uiText.avatarHomeIdle}
           />
 
           <View style={styles.langChip}>
-            <Text style={styles.langText}>Language: {lang.toUpperCase()}</Text>
+            <Pressable onPress={() => setShowLanguageMenu((prev) => !prev)}>
+              <Text style={styles.langText}>{uiText.chooseLanguage}: {selectedLanguage.toUpperCase()}</Text>
+            </Pressable>
           </View>
+
+          {showLanguageMenu ? (
+            <View style={styles.languageMenu}>
+              {LANGUAGE_OPTIONS.map((item) => (
+                <Pressable
+                  key={item.code}
+                  style={[styles.languageOption, selectedLanguage === item.code && styles.languageOptionActive]}
+                  onPress={() => changeLanguage(item.code)}
+                >
+                  <Text style={[styles.languageOptionText, selectedLanguage === item.code && styles.languageOptionTextActive]}>
+                    {item.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
 
           <View style={styles.modeRowHome}>
             <Pressable
@@ -393,7 +538,7 @@ export default function App() {
               onPress={() => setConversationMode("voice")}
             >
               <Text style={[styles.modePillHomeText, conversationMode === "voice" && styles.modePillHomeTextActive]}>
-                Voice + Listen
+                {uiText.modeVoice}
               </Text>
             </Pressable>
             <Pressable
@@ -404,18 +549,18 @@ export default function App() {
               }}
             >
               <Text style={[styles.modePillHomeText, conversationMode === "text" && styles.modePillHomeTextActive]}>
-                Text Mode
+                {uiText.modeText}
               </Text>
             </Pressable>
           </View>
 
-          <Text style={styles.modeHint}>Dono mode me aap mic aur text dono use kar sakte hain.</Text>
-          {conversationMode === "voice" ? <Text style={styles.liveHelpText}>Reply ke baad mic auto start hoga</Text> : null}
+          <Text style={styles.modeHint}>{uiText.modeHint}</Text>
+          {conversationMode === "voice" ? <Text style={styles.liveHelpText}>{uiText.autoListenHint}</Text> : null}
 
           <MicButton
             recording={isRecording}
             onPress={async () => {
-              await goConversation();
+              await goConversation(false);
               if (conversationMode === "voice") {
                 onMicPress();
               }
@@ -424,7 +569,7 @@ export default function App() {
 
           <Pressable onPress={goConversation} style={styles.secondaryBtn}>
             <Text style={styles.secondaryBtnText}>
-              {conversationMode === "voice" ? "Baat-cheet shuru karein" : "Text se continue karein"}
+              {conversationMode === "voice" ? uiText.startChatVoice : uiText.startChatText}
             </Text>
           </Pressable>
         </View>
@@ -436,7 +581,7 @@ export default function App() {
     return (
       <SafeAreaView style={styles.container}>
         <ScrollView contentContainerStyle={styles.resultsWrap}>
-          <Text style={styles.title}>Top 3 FD Options</Text>
+          <Text style={styles.title}>{uiText.topOptions}</Text>
           {recommendations.map((item, index) => (
             <ResultCard
               key={`${item.bank_name}-${index}`}
@@ -448,7 +593,7 @@ export default function App() {
             />
           ))}
           <Pressable style={styles.secondaryBtn} onPress={() => setScreen("conversation")}>
-            <Text style={styles.secondaryBtnText}>Phir se puchhein</Text>
+            <Text style={styles.secondaryBtnText}>{uiText.askAgain}</Text>
           </Pressable>
         </ScrollView>
       </SafeAreaView>
@@ -459,14 +604,14 @@ export default function App() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerCard}>
-          <Text style={styles.confirmText}>Kya aap FD banana chahte hain?</Text>
+          <Text style={styles.confirmText}>{uiText.confirmQuestion}</Text>
           {selectedFd ? <Text style={styles.fdChoice}>{selectedFd.bank_name}</Text> : null}
 
           <Pressable style={styles.yesBtn} onPress={() => setScreen("success")}>
-            <Text style={styles.yesNoText}>Haan</Text>
+            <Text style={styles.yesNoText}>{uiText.yes}</Text>
           </Pressable>
           <Pressable style={styles.noBtn} onPress={() => setScreen("results")}>
-            <Text style={styles.yesNoText}>Nahi</Text>
+            <Text style={styles.yesNoText}>{uiText.no}</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -478,7 +623,7 @@ export default function App() {
       <SafeAreaView style={styles.container}>
         <View style={styles.centerCard}>
           <Text style={styles.successIcon}>✅</Text>
-          <Text style={styles.confirmText}>Aapki FD request submit ho gayi hai</Text>
+          <Text style={styles.confirmText}>{uiText.submitted}</Text>
           <Pressable
             style={styles.secondaryBtn}
             onPress={() => {
@@ -488,7 +633,7 @@ export default function App() {
               setScreen("home");
             }}
           >
-            <Text style={styles.secondaryBtnText}>Phir se check karein</Text>
+            <Text style={styles.secondaryBtnText}>{uiText.checkAgain}</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -498,19 +643,39 @@ export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.chatWrap}>
-        <Text style={styles.title}>Conversation</Text>
+        <Text style={styles.title}>{uiText.conversationTitle}</Text>
 
         <View style={styles.agentRow}>
           <AgentAvatar
             speaking={conversationMode === "voice" && isSpeaking}
-            label={conversationMode === "voice" && isSpeaking ? "Main bol rahi hoon..." : isRecording ? "Main sun rahi hoon..." : "Main yahin hoon, poochiye"}
+            label={
+              conversationMode === "voice" && isSpeaking
+                ? uiText.avatarSpeaking
+                : isRecording
+                  ? uiText.avatarListening
+                  : uiText.avatarWaiting
+            }
           />
           <Pressable style={styles.stopSpeakBtn} onPress={stopPlayback}>
-            <Text style={styles.stopSpeakText}>Stop Voice</Text>
+            <Text style={styles.stopSpeakText}>{uiText.stopVoice}</Text>
           </Pressable>
         </View>
 
-        {conversationMode === "voice" ? <Text style={styles.liveHelpText}>Reply ke baad mic auto start hoga</Text> : null}
+        <View style={styles.inlineLanguageRow}>
+          {LANGUAGE_OPTIONS.map((item) => (
+            <Pressable
+              key={item.code}
+              style={[styles.inlineLanguageOption, selectedLanguage === item.code && styles.inlineLanguageOptionActive]}
+              onPress={() => changeLanguage(item.code)}
+            >
+              <Text style={[styles.inlineLanguageText, selectedLanguage === item.code && styles.inlineLanguageTextActive]}>
+                {item.code.toUpperCase()}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {conversationMode === "voice" ? <Text style={styles.liveHelpText}>{uiText.autoListenHint}</Text> : null}
 
         <View style={styles.modeRowConversation}>
           <Pressable
@@ -523,7 +688,7 @@ export default function App() {
                 conversationMode === "voice" && styles.modePillConversationTextActive
               ]}
             >
-              Voice + Listen
+              {uiText.modeVoice}
             </Text>
           </Pressable>
           <Pressable
@@ -539,7 +704,7 @@ export default function App() {
                 conversationMode === "text" && styles.modePillConversationTextActive
               ]}
             >
-              Text
+              {uiText.modeText}
             </Text>
           </Pressable>
         </View>
@@ -579,8 +744,12 @@ export default function App() {
             blurOnSubmit={false}
             onSubmitEditing={() => sendAdvisorInput(inputText)}
           />
-          <Pressable style={styles.sendBtn} onPress={() => sendAdvisorInput(inputText)}>
-            <Text style={styles.sendText}>Send</Text>
+          <Pressable
+            style={[styles.sendBtn, sendDisabled && styles.sendBtnDisabled]}
+            disabled={sendDisabled}
+            onPress={() => sendAdvisorInput(inputText)}
+          >
+            <Text style={[styles.sendText, sendDisabled && styles.sendTextDisabled]}>{uiText.send}</Text>
           </Pressable>
         </View>
 
@@ -588,8 +757,8 @@ export default function App() {
           <MicButton recording={isRecording} onPress={onMicPress} />
           <Text style={styles.bottomHint}>
             {conversationMode === "voice"
-              ? "Voice mode ON: boliye, main jawab dekar phir sunungi."
-              : "Text mode ON: chaho to mic bhi use kar sakte ho."}
+              ? uiText.bottomHintVoice
+              : uiText.bottomHintText}
           </Text>
         </View>
       </View>
@@ -606,6 +775,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    width: "100%",
     padding: spacing.xl,
     gap: spacing.xl
   },
@@ -623,15 +793,67 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8
   },
+  languageMenu: {
+    width: "100%",
+    maxWidth: 280,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    overflow: "hidden"
+  },
+  languageOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border
+  },
+  languageOptionActive: {
+    backgroundColor: colors.primarySoft
+  },
+  languageOptionText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.text
+  },
+  languageOptionTextActive: {
+    color: colors.primary
+  },
   langText: {
     fontSize: 16,
     fontWeight: "700",
     color: colors.text
   },
+  inlineLanguageRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 10
+  },
+  inlineLanguageOption: {
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: colors.surface
+  },
+  inlineLanguageOptionActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft
+  },
+  inlineLanguageText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: colors.subText
+  },
+  inlineLanguageTextActive: {
+    color: colors.primary
+  },
   modeRowHome: {
     flexDirection: "row",
     gap: 8,
     width: "100%",
+    maxWidth: 420,
     justifyContent: "center"
   },
   modePillHome: {
@@ -712,6 +934,9 @@ const styles = StyleSheet.create({
   },
   chatWrap: {
     flex: 1,
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
     padding: spacing.md
   },
   modeRowConversation: {
@@ -742,6 +967,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF"
   },
   chatList: {
+    flexGrow: 1,
     paddingBottom: 12,
     gap: 8
   },
@@ -761,7 +987,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary
   },
   bubbleText: {
-    fontSize: 19,
+    fontSize: 17,
     color: colors.text,
     fontWeight: "700"
   },
@@ -823,10 +1049,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center"
   },
+  sendBtnDisabled: {
+    backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.border
+  },
   sendText: {
     fontSize: 17,
     color: "#FFFFFF",
     fontWeight: "900"
+  },
+  sendTextDisabled: {
+    color: colors.subText
   },
   bottomActionRow: {
     marginTop: 14,
