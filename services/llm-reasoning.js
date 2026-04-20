@@ -7,16 +7,29 @@ function getLanguageLabel(lang) {
     hi: "Hindi",
     hinglish: "Hinglish",
     gu: "Gujarati",
-    ta: "Tamil"
+    ta: "Tamil",
+    bn: "Bengali",
+    kn: "Kannada",
+    ml: "Malayalam",
+    mr: "Marathi",
+    od: "Odia",
+    pa: "Punjabi",
+    te: "Telugu"
   };
   return map[lang] || "English";
 }
 
 function getAssistantText(response) {
   const choice = response?.choices?.[0];
-  const content = String(choice?.message?.content || "").trim();
+  const rawContent = choice?.message?.content;
+  const content = Array.isArray(rawContent)
+    ? rawContent
+        .map((part) => (typeof part?.text === "string" ? part.text : ""))
+        .join("\n")
+        .trim()
+    : String(rawContent || "").trim();
   if (content) return content;
-  const reasoning = String(choice?.message?.reasoning_content || "").trim();
+  const reasoning = String(choice?.message?.reasoning_content || choice?.message?.reasoning || "").trim();
   return reasoning;
 }
 
@@ -58,7 +71,8 @@ export async function generateFinancialReasoningReply({ userInput, lang }) {
     "Do not mention being an AI model.",
     "Do not reveal chain-of-thought, analysis, or internal reasoning.",
     "Keep answer concise (4 to 8 lines).",
-    `Respond in ${languageLabel}.`
+    "Also give the response in very clear fomat without any symbols or extra text so that it can be easlily read out by voice agents",
+    `Respond only in ${languageLabel}. Do not switch to English unless the user explicitly asks for English.`
   ].join(" ");
 
   const userPrompt = [
@@ -92,7 +106,7 @@ export async function generateFdAdvisorNarrative({
     "No fabricated banks or rates.",
     "Do not include analysis, planning text, or chain-of-thought.",
     "Keep answer user-friendly and concise.",
-    `Respond in ${languageLabel}.`
+    `Respond only in ${languageLabel}. Do not switch to English unless the user explicitly asks for English.`
   ].join(" ");
 
   const userPrompt = [
@@ -104,7 +118,8 @@ export async function generateFdAdvisorNarrative({
     "Output format:",
     "- 1 short intro",
     "- numbered list (up to 3) with bank name, rate, expected return and one reason",
-    "- 1 closing line asking user if they want comparison for another amount/tenure"
+    "- 1 closing line asking user if they want comparison for another amount/tenure",
+    "do not include any unecssary symbols like ** or extra text as it need to be get read out by voice agents"
   ].join("\n");
 
   return runChatCompletion({ systemPrompt, userPrompt });
