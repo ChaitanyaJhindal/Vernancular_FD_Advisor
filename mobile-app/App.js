@@ -34,10 +34,53 @@ function detectLangCode() {
   return "hi";
 }
 
-function stageToQuestion(stage) {
-  if (stage === "awaiting_amount") return "Kitna paisa invest karna chahte hain?";
-  if (stage === "awaiting_tenure") return "Kitne time ke liye FD karna chahte hain?";
-  return "Boliyega, main madad karta hoon.";
+function getUiText(lang) {
+  if (lang === "en") {
+    return {
+      greeting: "Hello, ready to find the best FD for you?",
+      askAmount: "How much amount do you want to invest?",
+      askTenure: "For how many months do you want the FD?",
+      genericPrompt: "Tell me your preference and I will help.",
+      notUnderstood: "I could not understand that. Please say it again.",
+      processing: "Thinking...",
+      inputPlaceholder: "Type your message",
+      repeatHint: "Please answer the last question so I can continue without repeating.",
+      repeatHardStop: "I am still waiting for your previous answer. Please share amount or tenure so I can proceed."
+    };
+  }
+
+  return {
+    greeting: "Namaste, FD ke liye taiyaar hain?",
+    askAmount: "Kitna paisa invest karna chahte hain?",
+    askTenure: "Kitne time ke liye FD karna chahte hain?",
+    genericPrompt: "Boliyega, main madad karta hoon.",
+    notUnderstood: "Samajh nahi aaya, dobara bolenge?",
+    processing: "Soch rahe hain...",
+    inputPlaceholder: "Yahan type karein",
+    repeatHint: "Aap pichhle sawal ka answer de dijiye, fir main aage continue karungi.",
+    repeatHardStop: "Main abhi bhi aapke pichhle answer ka wait kar rahi hoon. Amount ya tenure bata dijiye."
+  };
+}
+
+function stageToQuestion(stage, lang) {
+  const ui = getUiText(lang);
+  if (stage === "awaiting_amount") return ui.askAmount;
+  if (stage === "awaiting_tenure") return ui.askTenure;
+  return ui.genericPrompt;
+}
+
+function normalizeMessage(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function refineRepeatedBotText(rawText, repeatCount, lang) {
+  const ui = getUiText(lang);
+  if (repeatCount <= 0) return rawText;
+  if (repeatCount === 1) return `${rawText}\n\n${ui.repeatHint}`;
+  return ui.repeatHardStop;
 }
 
 export default function App() {
@@ -58,6 +101,8 @@ export default function App() {
   const soundRef = useRef(null);
   const playbackIdRef = useRef(0);
   const lang = useMemo(() => detectLangCode(), []);
+  const uiText = useMemo(() => getUiText(lang), [lang]);
+  const lastBotRef = useRef({ normalized: "", repeatCount: 0 });
 
   const { isRecording, startRecording, stopRecording } = useVoiceRecorder();
 
@@ -240,19 +285,30 @@ export default function App() {
 
     setLoading(true);
     setMessages((prev) => [...prev, { role: "user", text: userInput }]);
+    lastBotRef.current = { normalized: "", repeatCount: 0 };
 
     try {
       const response = await askFdAdvisor({
         session_id: sessionId.current,
         userInput,
         user_language: lang,
+        response_language: lang,
+        reasoning_mode: "llm_only",
+        frontend_directive: "Use LLM reasoning only. Respond in same language as user_language.",
         location_permission: locationPermission,
         nearbyBanks: locationState.nearbyBanks,
         lat: locationState.lat,
         lng: locationState.lng
       });
 
-      const botText = String(response?.text || stageToQuestion(response?.stage));
+      const incomingBot = String(response?.text || stageToQuestion(response?.stage, lang)).trim();
+      const normalizedIncoming = normalizeMessage(incomingBot);
+      const repeatCount =
+        normalizedIncoming && normalizedIncoming === lastBotRef.current.normalized
+          ? lastBotRef.current.repeatCount + 1
+          : 0;
+      lastBotRef.current = { normalized: normalizedIncoming, repeatCount };
+      const botText = refineRepeatedBotText(incomingBot, repeatCount, lang);
       setMessages((prev) => [...prev, { role: "bot", text: botText }]);
 
       if (conversationMode === "voice") {
@@ -264,7 +320,7 @@ export default function App() {
         setScreen("results");
       }
     } catch {
-      setMessages((prev) => [...prev, { role: "bot", text: "Samajh nahi aaya, dobara bolenge?" }]);
+      setMessages((prev) => [...prev, { role: "bot", text: uiText.notUnderstood }]);
     } finally {
       setLoading(false);
       setInputText("");
@@ -288,14 +344,14 @@ export default function App() {
 
       if (!text) {
         setLoading(false);
-        setMessages((prev) => [...prev, { role: "bot", text: "Samajh nahi aaya, dobara bolenge?" }]);
+        setMessages((prev) => [...prev, { role: "bot", text: uiText.notUnderstood }]);
         return;
       }
 
       await sendAdvisorInput(text);
     } catch {
       setLoading(false);
-      setMessages((prev) => [...prev, { role: "bot", text: "Samajh nahi aaya, dobara bolenge?" }]);
+      setMessages((prev) => [...prev, { role: "bot", text: uiText.notUnderstood }]);
     }
   };
 
@@ -303,8 +359,9 @@ export default function App() {
     setScreen("conversation");
 
     if (messages.length === 0) {
-      const greeting = "Namaste, FD ke liye taiyaar hain?";
+      const greeting = uiText.greeting;
       setMessages([{ role: "bot", text: greeting }]);
+      lastBotRef.current = { normalized: normalizeMessage(greeting), repeatCount: 0 };
 
       if (conversationMode === "voice") {
         await playText(greeting);
@@ -506,7 +563,7 @@ export default function App() {
         {loading ? (
           <View style={styles.loadingRow}>
             <ActivityIndicator color={colors.primary} />
-            <Text style={styles.loadingText}>Soch rahe hain...</Text>
+            <Text style={styles.loadingText}>{uiText.processing}</Text>
           </View>
         ) : null}
 
@@ -516,8 +573,11 @@ export default function App() {
           <TextInput
             style={styles.input}
             value={inputText}
-            placeholder="Yahan type karein"
+            placeholder={uiText.inputPlaceholder}
             onChangeText={setInputText}
+            returnKeyType="send"
+            blurOnSubmit={false}
+            onSubmitEditing={() => sendAdvisorInput(inputText)}
           />
           <Pressable style={styles.sendBtn} onPress={() => sendAdvisorInput(inputText)}>
             <Text style={styles.sendText}>Send</Text>
