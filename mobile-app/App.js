@@ -29,17 +29,47 @@ import { useVoiceRecorder } from "./src/hooks/useVoiceRecorder";
 import { colors, radii, spacing } from "./src/theme";
 
 function detectLangCode() {
-  const locale = String(Localization.getLocales?.()?.[0]?.languageCode || "hi").toLowerCase();
-  if (["hi", "en", "ta", "gu"].includes(locale)) return locale;
+  const firstLocale = Localization.getLocales?.()?.[0] || {};
+  const languageCode = String(firstLocale.languageCode || "").toLowerCase();
+  const languageTag = String(firstLocale.languageTag || "").toLowerCase();
+  const tagCode = languageTag.includes("-") ? languageTag.split("-")[0] : languageTag;
+  const candidate = languageCode || tagCode;
+  if (SUPPORTED_LANGUAGE_CODES.has(candidate)) return candidate;
   return "hi";
 }
 
 const LANGUAGE_OPTIONS = [
-  { code: "hi", label: "Hindi" },
-  { code: "en", label: "English" },
-  { code: "ta", label: "Tamil" },
-  { code: "gu", label: "Gujarati" }
+  { code: "hi", locale: "hi-IN", label: "Hindi" },
+  { code: "as", locale: "as-IN", label: "Assamese" },
+  { code: "bn", locale: "bn-IN", label: "Bengali" },
+  { code: "ur", locale: "ur-IN", label: "Urdu" },
+  { code: "kn", locale: "kn-IN", label: "Kannada" },
+  { code: "ne", locale: "ne-IN", label: "Nepali" },
+  { code: "ml", locale: "ml-IN", label: "Malayalam" },
+  { code: "kok", locale: "kok-IN", label: "Konkani" },
+  { code: "mr", locale: "mr-IN", label: "Marathi" },
+  { code: "ks", locale: "ks-IN", label: "Kashmiri" },
+  { code: "od", locale: "od-IN", label: "Odia" },
+  { code: "sd", locale: "sd-IN", label: "Sindhi" },
+  { code: "pa", locale: "pa-IN", label: "Punjabi" },
+  { code: "sa", locale: "sa-IN", label: "Sanskrit" },
+  { code: "ta", locale: "ta-IN", label: "Tamil" },
+  { code: "sat", locale: "sat-IN", label: "Santali" },
+  { code: "te", locale: "te-IN", label: "Telugu" },
+  { code: "mni", locale: "mni-IN", label: "Manipuri" },
+  { code: "en", locale: "en-IN", label: "English" },
+  { code: "brx", locale: "brx-IN", label: "Bodo" },
+  { code: "gu", locale: "gu-IN", label: "Gujarati" },
+  { code: "mai", locale: "mai-IN", label: "Maithili" },
+  { code: "doi", locale: "doi-IN", label: "Dogri" }
 ];
+
+const SUPPORTED_LANGUAGE_CODES = new Set(LANGUAGE_OPTIONS.map((x) => x.code));
+
+function getLocaleFromLanguageCode(code) {
+  const match = LANGUAGE_OPTIONS.find((item) => item.code === code);
+  return match?.locale || "hi-IN";
+}
 
 function getUiText(lang) {
   if (lang === "en") {
@@ -141,36 +171,40 @@ function getUiText(lang) {
     };
   }
 
-  return {
-    greeting: "Namaste, main aapki FD advisor hoon.",
-    languageSwitched: "Language update ho gaya hai. Ab main Hindi me baat karungi.",
-    chooseLanguage: "Bhasha chuniyega",
-    notUnderstood: "Samajh nahi aaya, dobara bolenge?",
-    processing: "Soch rahe hain...",
-    inputPlaceholder: "Yahan type karein",
-    modeVoice: "Voice + Listen",
-    modeText: "Text Mode",
-    modeHint: "Dono mode me aap mic aur text dono use kar sakte hain.",
-    autoListenHint: "Reply ke baad mic auto start hoga.",
-    startChatVoice: "Baat-cheet shuru karein",
-    startChatText: "Text se continue karein",
-    conversationTitle: "Conversation",
-    stopVoice: "Stop Voice",
-    send: "Send",
-    topOptions: "Top 3 FD Options",
-    askAgain: "Phir se puchhein",
-    confirmQuestion: "Kya aap FD banana chahte hain?",
-    yes: "Haan",
-    no: "Nahi",
-    submitted: "Aapki FD request submit ho gayi hai",
-    checkAgain: "Phir se check karein",
-    bottomHintVoice: "Voice mode ON: boliye, main jawab dekar phir sunungi.",
-    bottomHintText: "Text mode ON: chaho to mic bhi use kar sakte ho.",
-    avatarHomeIdle: "Aapki FD advisor",
-    avatarSpeaking: "Main bol rahi hoon...",
-    avatarListening: "Main sun rahi hoon...",
-    avatarWaiting: "Main yahin hoon, poochiye"
-  };
+  if (lang === "hi") {
+    return {
+      greeting: "Namaste, main aapki FD advisor hoon.",
+      languageSwitched: "Language update ho gaya hai. Ab main Hindi me baat karungi.",
+      chooseLanguage: "Bhasha chuniyega",
+      notUnderstood: "Samajh nahi aaya, dobara bolenge?",
+      processing: "Soch rahe hain...",
+      inputPlaceholder: "Yahan type karein",
+      modeVoice: "Voice + Listen",
+      modeText: "Text Mode",
+      modeHint: "Dono mode me aap mic aur text dono use kar sakte hain.",
+      autoListenHint: "Reply ke baad mic auto start hoga.",
+      startChatVoice: "Baat-cheet shuru karein",
+      startChatText: "Text se continue karein",
+      conversationTitle: "Conversation",
+      stopVoice: "Stop Voice",
+      send: "Send",
+      topOptions: "Top 3 FD Options",
+      askAgain: "Phir se puchhein",
+      confirmQuestion: "Kya aap FD banana chahte hain?",
+      yes: "Haan",
+      no: "Nahi",
+      submitted: "Aapki FD request submit ho gayi hai",
+      checkAgain: "Phir se check karein",
+      bottomHintVoice: "Voice mode ON: boliye, main jawab dekar phir sunungi.",
+      bottomHintText: "Text mode ON: chaho to mic bhi use kar sakte ho.",
+      avatarHomeIdle: "Aapki FD advisor",
+      avatarSpeaking: "Main bol rahi hoon...",
+      avatarListening: "Main sun rahi hoon...",
+      avatarWaiting: "Main yahin hoon, poochiye"
+    };
+  }
+
+  return getUiText("en");
 }
 
 function stripThinkingBlocks(text) {
@@ -240,10 +274,7 @@ export default function App() {
   };
 
   const resolveSpeechLocale = () => {
-    if (selectedLanguage === "en") return "en-IN";
-    if (selectedLanguage === "ta") return "ta-IN";
-    if (selectedLanguage === "gu") return "gu-IN";
-    return "hi-IN";
+    return getLocaleFromLanguageCode(selectedLanguage);
   };
 
   const changeLanguage = async (nextLanguage) => {
@@ -518,17 +549,19 @@ export default function App() {
 
           {showLanguageMenu ? (
             <View style={styles.languageMenu}>
-              {LANGUAGE_OPTIONS.map((item) => (
-                <Pressable
-                  key={item.code}
-                  style={[styles.languageOption, selectedLanguage === item.code && styles.languageOptionActive]}
-                  onPress={() => changeLanguage(item.code)}
-                >
-                  <Text style={[styles.languageOptionText, selectedLanguage === item.code && styles.languageOptionTextActive]}>
-                    {item.label}
-                  </Text>
-                </Pressable>
-              ))}
+              <ScrollView style={styles.languageMenuScroll} nestedScrollEnabled>
+                {LANGUAGE_OPTIONS.map((item) => (
+                  <Pressable
+                    key={item.code}
+                    style={[styles.languageOption, selectedLanguage === item.code && styles.languageOptionActive]}
+                    onPress={() => changeLanguage(item.code)}
+                  >
+                    <Text style={[styles.languageOptionText, selectedLanguage === item.code && styles.languageOptionTextActive]}>
+                      {item.label} ({item.locale})
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
             </View>
           ) : null}
 
@@ -796,11 +829,15 @@ const styles = StyleSheet.create({
   languageMenu: {
     width: "100%",
     maxWidth: 280,
+    maxHeight: 260,
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
     overflow: "hidden"
+  },
+  languageMenuScroll: {
+    maxHeight: 260
   },
   languageOption: {
     paddingVertical: 10,
