@@ -11,7 +11,7 @@ const SCRIPT_REGEX_BY_LANG = {
   mr: /[\u0900-\u097F]/,
   od: /[\u0B00-\u0B7F]/,
   pa: /[\u0A00-\u0A7F]/,
-  te: /[\u0C00-\u0C7F] // FIXED missing bracket
+  te: /[\u0C00-\u0C7F]/
 };
 
 function getLanguageLabel(lang) {
