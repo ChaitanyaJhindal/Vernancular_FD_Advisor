@@ -59,8 +59,8 @@ function getLocaleFromLanguageCode(code) {
 }
 
 function getUiText(lang) {
-  if (lang === "en") {
-    return {
+  const texts = {
+    en: {
       greeting: "Hello, I am your FD advisor.",
       languageSwitched: "Language updated. I will continue in English.",
       chooseLanguage: "Choose Language",
@@ -83,115 +83,105 @@ function getUiText(lang) {
       no: "No",
       submitted: "Your FD request has been submitted",
       checkAgain: "Check again",
-      bottomHintVoice: "Voice mode ON: speak freely, I will reply and listen again.",
-      bottomHintText: "Text mode ON: you can still use mic anytime.",
+      bottomHintVoice: "Voice mode ON: speak freely.",
+      bottomHintText: "Text mode ON.",
       avatarHomeIdle: "Your FD advisor",
       avatarSpeaking: "I am speaking...",
       avatarListening: "I am listening...",
-      avatarWaiting: "I am here, ask me anything"
-    };
-  }
+      avatarWaiting: "Ask me anything"
+    },
 
-  if (lang === "ta") {
-    return {
-      greeting: "வணக்கம், நான் உங்கள் FD ஆலோசகர்.",
-      languageSwitched: "மொழி மாற்றப்பட்டது. இனி தமிழில் தொடர்கிறேன்.",
-      chooseLanguage: "மொழியை தேர்வு செய்யவும்",
-      notUnderstood: "எனக்கு புரியவில்லை, தயவு செய்து மீண்டும் சொல்லுங்கள்.",
-      processing: "சிந்தித்து கொண்டிருக்கிறேன்...",
-      inputPlaceholder: "உங்கள் செய்தியை எழுதுங்கள்",
-      modeVoice: "குரல் + கேட்பு",
-      modeText: "உரை முறை",
-      modeHint: "எப்போதும் குரலும் உரையும் பயன்படுத்தலாம்.",
-      autoListenHint: "ஒவ்வொரு பதிலிற்குப் பிறகும் மைக் தானாக தொடங்கும்.",
-      startChatVoice: "உரையாடலை தொடங்குங்கள்",
-      startChatText: "உரையுடன் தொடரவும்",
-      conversationTitle: "உரையாடல்",
-      stopVoice: "குரலை நிறுத்து",
-      send: "அனுப்பு",
-      topOptions: "சிறந்த 3 FD தேர்வுகள்",
-      askAgain: "மீண்டும் கேளுங்கள்",
-      confirmQuestion: "இந்த FD-ஐ தொடர வேண்டுமா?",
-      yes: "ஆம்",
-      no: "இல்லை",
-      submitted: "உங்கள் FD கோரிக்கை அனுப்பப்பட்டது",
-      checkAgain: "மீண்டும் சரிபார்",
-      bottomHintVoice: "குரல் முறை ON: சுதந்திரமாக பேசுங்கள்.",
-      bottomHintText: "உரை முறை ON: மைக்கையும் பயன்படுத்தலாம்.",
-      avatarHomeIdle: "உங்கள் FD ஆலோசகர்",
-      avatarSpeaking: "நான் பேசுகிறேன்...",
-      avatarListening: "நான் கேட்கிறேன்...",
-      avatarWaiting: "நான் இங்கே இருக்கிறேன், கேளுங்கள்"
-    };
-  }
+    hi: {
+      greeting: "नमस्ते, मैं आपकी FD सलाहकार हूँ।",
+      languageSwitched: "भाषा बदल गई है। अब मैं हिंदी में बात करूँगी।",
+      chooseLanguage: "भाषा चुनें",
+      notUnderstood: "समझ नहीं आया, फिर से बोलिए।",
+      processing: "सोच रहे हैं...",
+      inputPlaceholder: "यहाँ लिखें",
+      modeVoice: "वॉइस + सुनना",
+      modeText: "टेक्स्ट मोड",
+      send: "भेजें",
+      yes: "हाँ",
+      no: "नहीं"
+    },
 
-  if (lang === "gu") {
-    return {
+    bn: {
+      greeting: "নমস্কার, আমি আপনার FD পরামর্শদাতা।",
+      chooseLanguage: "ভাষা নির্বাচন করুন",
+      send: "পাঠান",
+      yes: "হ্যাঁ",
+      no: "না"
+    },
+
+    gu: {
       greeting: "નમસ્તે, હું તમારો FD સલાહકાર છું.",
-      languageSwitched: "ભાષા બદલાઈ ગઈ છે. હવે હું ગુજરાતીમાં જવાબ આપીશ.",
       chooseLanguage: "ભાષા પસંદ કરો",
-      notUnderstood: "મને સમજાયું નહીં, કૃપા કરીને ફરી કહો.",
-      processing: "વિચાર કરી રહ્યો છું...",
-      inputPlaceholder: "તમારો સંદેશ લખો",
-      modeVoice: "વૉઇસ + લિસન",
-      modeText: "ટેક્સ્ટ મોડ",
-      modeHint: "તમે અવાજ અને ટેક્સ્ટ બન્ને ઉપયોગ કરી શકો છો.",
-      autoListenHint: "દરેક જવાબ પછી માઇક ફરી શરૂ થશે.",
-      startChatVoice: "ચેટ શરૂ કરો",
-      startChatText: "ટેક્સ્ટથી ચાલુ રાખો",
-      conversationTitle: "વાતચીત",
-      stopVoice: "વૉઇસ બંધ કરો",
       send: "મોકલો",
-      topOptions: "ટોપ 3 FD વિકલ્પો",
-      askAgain: "ફરી પૂછો",
-      confirmQuestion: "શું તમે આ FD આગળ વધારવા માંગો છો?",
       yes: "હા",
-      no: "ના",
-      submitted: "તમારી FD વિનંતી સબમિટ થઈ ગઈ છે",
-      checkAgain: "ફરી તપાસો",
-      bottomHintVoice: "વૉઇસ મોડ ON: બોલો, હું જવાબ આપી ફરી સાંભળું.",
-      bottomHintText: "ટેક્સ્ટ મોડ ON: માઇક પણ ઉપયોગ કરી શકો છો.",
-      avatarHomeIdle: "તમારો FD સલાહકાર",
-      avatarSpeaking: "હું બોલી રહ્યો છું...",
-      avatarListening: "હું સાંભળી રહ્યો છું...",
-      avatarWaiting: "હું અહીં છું, પૂછો"
-    };
-  }
+      no: "ના"
+    },
 
-  if (lang === "hi") {
-    return {
-      greeting: "Namaste, main aapki FD advisor hoon.",
-      languageSwitched: "Language update ho gaya hai. Ab main Hindi me baat karungi.",
-      chooseLanguage: "Bhasha chuniyega",
-      notUnderstood: "Samajh nahi aaya, dobara bolenge?",
-      processing: "Soch rahe hain...",
-      inputPlaceholder: "Yahan type karein",
-      modeVoice: "Voice + Listen",
-      modeText: "Text Mode",
-      modeHint: "Dono mode me aap mic aur text dono use kar sakte hain.",
-      autoListenHint: "Reply ke baad mic auto start hoga.",
-      startChatVoice: "Baat-cheet shuru karein",
-      startChatText: "Text se continue karein",
-      conversationTitle: "Conversation",
-      stopVoice: "Stop Voice",
-      send: "Send",
-      topOptions: "Top 3 FD Options",
-      askAgain: "Phir se puchhein",
-      confirmQuestion: "Kya aap FD banana chahte hain?",
-      yes: "Haan",
-      no: "Nahi",
-      submitted: "Aapki FD request submit ho gayi hai",
-      checkAgain: "Phir se check karein",
-      bottomHintVoice: "Voice mode ON: boliye, main jawab dekar phir sunungi.",
-      bottomHintText: "Text mode ON: chaho to mic bhi use kar sakte ho.",
-      avatarHomeIdle: "Aapki FD advisor",
-      avatarSpeaking: "Main bol rahi hoon...",
-      avatarListening: "Main sun rahi hoon...",
-      avatarWaiting: "Main yahin hoon, poochiye"
-    };
-  }
+    mr: {
+      greeting: "नमस्कार, मी तुमचा FD सल्लागार आहे.",
+      chooseLanguage: "भाषा निवडा",
+      send: "पाठवा",
+      yes: "होय",
+      no: "नाही"
+    },
 
-  return getUiText("en");
+    ta: {
+      greeting: "வணக்கம், நான் உங்கள் FD ஆலோசகர்.",
+      chooseLanguage: "மொழியை தேர்வு செய்யவும்",
+      send: "அனுப்பு",
+      yes: "ஆம்",
+      no: "இல்லை"
+    },
+
+    te: {
+      greeting: "నమస్తే, నేను మీ FD సలహాదారు.",
+      chooseLanguage: "భాష ఎంచుకోండి",
+      send: "పంపండి",
+      yes: "అవును",
+      no: "కాదు"
+    },
+
+    kn: {
+      greeting: "ನಮಸ್ಕಾರ, ನಾನು ನಿಮ್ಮ FD ಸಲಹೆಗಾರ.",
+      chooseLanguage: "ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ",
+      send: "ಕಳುಹಿಸಿ",
+      yes: "ಹೌದು",
+      no: "ಇಲ್ಲ"
+    },
+
+    ml: {
+      greeting: "നമസ്കാരം, ഞാൻ നിങ്ങളുടെ FD ഉപദേഷ്ടാവ് ആണ്.",
+      chooseLanguage: "ഭാഷ തിരഞ്ഞെടുക്കുക",
+      send: "അയയ്ക്കുക",
+      yes: "അതെ",
+      no: "ഇല്ല"
+    },
+
+    pa: {
+      greeting: "ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਮੈਂ ਤੁਹਾਡਾ FD ਸਲਾਹਕਾਰ ਹਾਂ।",
+      chooseLanguage: "ਭਾਸ਼ਾ ਚੁਣੋ",
+      send: "ਭੇਜੋ",
+      yes: "ਹਾਂ",
+      no: "ਨਹੀਂ"
+    },
+
+    od: {
+      greeting: "ନମସ୍କାର, ମୁଁ ଆପଣଙ୍କ FD ପରାମର୍ଶଦାତା।",
+      chooseLanguage: "ଭାଷା ବାଛନ୍ତୁ",
+      send: "ପଠାନ୍ତୁ",
+      yes: "ହଁ",
+      no: "ନା"
+    }
+  };
+
+  return {
+    ...texts.en,         // fallback defaults
+    ...(texts[lang] || {})
+  };
 }
 
 function stripThinkingBlocks(text) {
