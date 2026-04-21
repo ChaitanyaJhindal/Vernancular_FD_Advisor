@@ -272,14 +272,6 @@ export default function App() {
 
     setSelectedLanguage(nextLanguage);
     setShowLanguageMenu(false);
-
-    if (screen === "conversation") {
-      const languageMessage = getUiText(nextLanguage).languageSwitched;
-      setMessages((prev) => [...prev, { role: "bot", text: languageMessage }]);
-      if (conversationMode === "voice") {
-        await playText(languageMessage);
-      }
-    }
   };
 
   const sendDisabled = loading || !inputText.trim();
