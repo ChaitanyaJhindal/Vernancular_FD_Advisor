@@ -40,6 +40,7 @@ function detectLangCode() {
 
 const LANGUAGE_OPTIONS = [
   { code: "en", locale: "en-IN", label: "English" },
+  { code: "hi", locale: "hi-IN", label: "Hindi" },
   { code: "bn", locale: "bn-IN", label: "Bengali" },
   { code: "gu", locale: "gu-IN", label: "Gujarati" },
   { code: "kn", locale: "kn-IN", label: "Kannada" },
