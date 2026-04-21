@@ -77,8 +77,12 @@ out center;
       results: sorted
     });
   } catch (error) {
-    res.status(500).json({
-      error: "Failed to fetch nearby banks",
+    res.status(200).json({
+      count: 0,
+      radiusMeters,
+      results: [],
+      degraded: true,
+      error: "Nearby banks service is temporarily unavailable",
       details: error?.message || "Unknown error"
     });
   }

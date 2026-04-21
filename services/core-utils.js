@@ -1,4 +1,5 @@
 import fs from "fs";
+import https from "https";
 import path from "path";
 import {
   SEARCH_RADIUS_METERS,
@@ -586,22 +587,66 @@ export function getDistanceKm(lat1, lon1, lat2, lon2) {
 
 async function fetchOverpassWithRetry(url, retries = 2, timeoutMs = 15000) {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
+    let text;
+    const requestHeaders = {
+      "User-Agent": "vernacular-fd-advisor/1.0 (+https://vernancular-fd-advisor.onrender.com)",
+      Accept: "*/*"
+    };
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    if (typeof fetch === "function") {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(url, {
+          signal: controller.signal,
+          headers: requestHeaders
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        text = await response.text();
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    } else {
+      text = await fetchTextViaHttps(url, timeoutMs, requestHeaders);
     }
 
-    return await response.text();
+    return text;
   } catch (error) {
     if (retries > 0) {
       return fetchOverpassWithRetry(url, retries - 1, timeoutMs);
     }
     throw error;
   }
+}
+
+function fetchTextViaHttps(url, timeoutMs = 15000, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, { headers }, (res) => {
+      const status = Number(res.statusCode || 0);
+      let body = "";
+
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => {
+        body += chunk;
+      });
+
+      res.on("end", () => {
+        if (status >= 200 && status < 300) {
+          resolve(body);
+          return;
+        }
+        reject(new Error(`HTTP ${status || "unknown"}`));
+      });
+    });
+
+    req.setTimeout(timeoutMs, () => {
+      req.destroy(new Error("Request timeout"));
+    });
+
+    req.on("error", reject);
+  });
 }
 
 export async function fetchOverpassFromMirrors(query) {
