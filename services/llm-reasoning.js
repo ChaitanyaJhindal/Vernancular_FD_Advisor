@@ -1,6 +1,19 @@
 import { LLM_CONFIG } from "../config/app-config.js";
 import { getSarvamClient } from "./sarvam-client.js";
 
+const SCRIPT_REGEX_BY_LANG = {
+  hi: /[\u0900-\u097F]/,
+  gu: /[\u0A80-\u0AFF]/,
+  ta: /[\u0B80-\u0BFF]/,
+  bn: /[\u0980-\u09FF]/,
+  kn: /[\u0C80-\u0CFF]/,
+  ml: /[\u0D00-\u0D7F]/,
+  mr: /[\u0900-\u097F]/,
+  od: /[\u0B00-\u0B7F]/,
+  pa: /[\u0A00-\u0A7F]/,
+  te: /[\u0C00-\u0C7F]/
+};
+
 function getLanguageLabel(lang) {
   const map = {
     en: "English",
@@ -31,6 +44,38 @@ function getAssistantText(response) {
   if (content) return content;
   const reasoning = String(choice?.message?.reasoning_content || choice?.message?.reasoning || "").trim();
   return reasoning;
+}
+
+function sanitizeAssistantText(text) {
+  const raw = String(text || "");
+  const removedPaired = raw.replace(/<think>[\s\S]*?<\/think>/gi, " ");
+  const removedDangling = removedPaired.replace(/<think>[\s\S]*$/gi, " ");
+  return removedDangling.replace(/\s+/g, " ").trim();
+}
+
+function validateLanguageOrThrow(lang, text) {
+  const cleaned = sanitizeAssistantText(text);
+  if (!cleaned) {
+    throw new Error("LLM returned empty visible content");
+  }
+
+  if (lang === "en" || lang === "hinglish") {
+    return cleaned;
+  }
+
+  const scriptRegex = SCRIPT_REGEX_BY_LANG[lang];
+  if (!scriptRegex) {
+    return cleaned;
+  }
+
+  const nativeCount = (cleaned.match(new RegExp(scriptRegex.source, "g")) || []).length;
+  const englishCount = (cleaned.match(/[A-Za-z]/g) || []).length;
+
+  if (nativeCount < 10 || englishCount > nativeCount * 1.2) {
+    throw new Error(`LLM language mismatch for lang=${lang}`);
+  }
+
+  return cleaned;
 }
 
 async function runChatCompletion({ systemPrompt, userPrompt }) {
@@ -85,7 +130,8 @@ export async function generateFinancialReasoningReply({ userInput, lang }) {
     "3) If user query is risky/illegal, refuse that part and suggest safe alternatives."
   ].join("\n");
 
-  return runChatCompletion({ systemPrompt, userPrompt });
+  const text = await runChatCompletion({ systemPrompt, userPrompt });
+  return validateLanguageOrThrow(lang, text);
 }
 
 export async function generateFdAdvisorNarrative({
@@ -122,5 +168,6 @@ export async function generateFdAdvisorNarrative({
     "do not include any unecssary symbols like ** or extra text as it need to be get read out by voice agents"
   ].join("\n");
 
-  return runChatCompletion({ systemPrompt, userPrompt });
+  const text = await runChatCompletion({ systemPrompt, userPrompt });
+  return validateLanguageOrThrow(lang, text);
 }
